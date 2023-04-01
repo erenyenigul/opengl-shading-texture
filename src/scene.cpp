@@ -14,7 +14,7 @@
 #include "Angel.h"
 #include "shader.h"
 
-#define FLOOR_Y_POS -13.0
+#define FLOOR_Y_POS -13.5
 
 void SceneObject::triangle(const point4 &a, const point4 &b, const point4 &c)
 {
@@ -75,14 +75,13 @@ void SceneObject::tetrahedron(int count)
     divide_triangle(v[0], v[2], v[3], count);
 }
 
-SceneObject::SceneObject(vec4 position, Shader &shader)
-    : position{position}, shader{shader}
+SceneObject::SceneObject(vec4 position, Shader &shader, int numVertices)
+    : position{position}, shader{shader}, points{new point4[numVertices]}, normals{new vec3[numVertices]}
 {
-    this->points = new point4[NumVertices];
-    this->normals = new vec3[NumVertices];
+    this->numVertices = numVertices;
+}
 
-    initSphere();
-
+void SceneObject::configGl(){
     // Create a vertex array object
     glGenVertexArrays(1, &this->vao);
     glBindVertexArray(this->vao);
@@ -91,12 +90,12 @@ SceneObject::SceneObject(vec4 position, Shader &shader)
     GLuint buffer;
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(point4) * NumVertices + sizeof(vec3) * NumVertices,
+    glBufferData(GL_ARRAY_BUFFER, sizeof(point4) * numVertices + sizeof(vec3) * numVertices,
                  NULL, GL_STATIC_DRAW);
 
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(point4) * NumVertices, this->points);
-    glBufferSubData(GL_ARRAY_BUFFER, sizeof(point4) * NumVertices,
-                    sizeof(vec3) * NumVertices, this->normals);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(point4) * numVertices, this->points);
+    glBufferSubData(GL_ARRAY_BUFFER, sizeof(point4) * numVertices,
+                    sizeof(vec3) * numVertices, this->normals);
 
     // set up vertex arrays
     GLuint vPosition = shader.getAttribLocation("vPosition");
@@ -105,7 +104,7 @@ SceneObject::SceneObject(vec4 position, Shader &shader)
 
     GLuint vNormal = shader.getAttribLocation("vNormal");
     glEnableVertexAttribArray(vNormal);
-    glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(point4) * this->NumVertices));
+    glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(point4) * this->numVertices));
 
     // Initialize shader lighting parameters
     point4 light_position(0.0, 0.0, 2.0, 0.0);
@@ -147,10 +146,127 @@ void SceneObject::display()
 
     glBindVertexArray(this->vao);
 
-    glDrawArrays(GL_TRIANGLES, 0, this->NumVertices);
+    glDrawArrays(GL_TRIANGLES, 0, this->numVertices);
 }
 
-void SceneObject::initSphere()
+void SceneObject::form()
 {
-    tetrahedron(this->NumTimesToSubdivide);
+    puts("form");
+}
+
+// Ball
+
+void Ball::triangle(const point4 &a, const point4 &b, const point4 &c)
+{
+    vec3 normal = normalize(cross(b - a, c - b));
+    this->normals[Index] = normal;
+    this->points[Index] = a;
+    this->Index++;
+    this->normals[Index] = normal;
+    this->points[Index] = b;
+    this->Index++;
+    this->normals[Index] = normal;
+    this->points[Index] = c;
+    this->Index++;
+}
+
+point4 Ball::unit(const point4 &p)
+{
+    float len = p.x * p.x + p.y * p.y + p.z * p.z;
+    point4 t;
+    if (len > DivideByZeroTolerance)
+    {
+        t = p / sqrt(len);
+        t.w = 1.0;
+    }
+    return t;
+}
+
+void Ball::divide_triangle(const point4 &a, const point4 &b,
+                           const point4 &c, int count)
+{
+    if (count > 0)
+    {
+        point4 v1 = unit(a + b);
+        point4 v2 = unit(a + c);
+        point4 v3 = unit(b + c);
+        divide_triangle(a, v1, v2, count - 1);
+        divide_triangle(c, v2, v3, count - 1);
+        divide_triangle(b, v3, v1, count - 1);
+        divide_triangle(v1, v3, v2, count - 1);
+    }
+    else
+    {
+        triangle(a, b, c);
+    }
+}
+
+void Ball::tetrahedron(int count)
+{
+    point4 v[4] = {
+        vec4(0.0, 0.0, 1.0, 1.0),
+        vec4(0.0, 0.942809, -0.333333, 1.0),
+        vec4(-0.816497, -0.471405, -0.333333, 1.0),
+        vec4(0.816497, -0.471405, -0.333333, 1.0)};
+
+    divide_triangle(v[0], v[1], v[2], count);
+    divide_triangle(v[3], v[2], v[1], count);
+    divide_triangle(v[0], v[3], v[1], count);
+    divide_triangle(v[0], v[2], v[3], count);
+}
+
+void Ball::form()
+{
+    tetrahedron(5);
+}
+
+Ball::Ball(vec4 position, Shader& shader)
+: SceneObject(position, shader, 4 * 4096)
+{
+    form();
+    configGl();
+}
+
+Cube::Cube(vec4 position, Shader& shader) : SceneObject(position, shader, 12)
+{
+    form();
+    configGl();
+}
+
+void Cube::form(){    
+    // this->points containing 12 different vertices that form 6 faces
+    // this->normals containing 12 different normals that form 6 faces
+    // this->numVertices = 12
+
+    // 6 faces
+    // 2 triangles per face
+
+    // 2 triangles per face
+    // 3 vertices per triangle
+
+    this->points[0] = point4(-2.0, -2.0, 2.0, 1.0);
+    this->points[1] = point4(-2.0, 2.0, 2.0, 1.0);
+    this->points[2] = point4(2.0, 2.0, 2.0, 1.0);
+    this->points[3] = point4(2.0, 2.0, 2.0, 1.0);
+    this->points[4] = point4(2.0, -2.0, 2.0, 1.0);
+    this->points[5] = point4(-2.0, -2.0, 2.0, 1.0);
+    this->points[6] = point4(-2.0, -2.0, -2.0, 1.0);
+    this->points[7] = point4(-2.0, 2.0, -2.0, 1.0);
+    this->points[8] = point4(2.0, 2.0, -2.0, 1.0);
+    this->points[9] = point4(2.0, 2.0, -2.0, 1.0);
+    this->points[10] = point4(2.0, -2.0, -2.0, 1.0);
+    this->points[11] = point4(-2.0, -2.0, -2.0, 1.0);
+
+    this->normals[0] = vec3(0.0, 0.0, 1.0);
+    this->normals[1] = vec3(0.0, 0.0, 1.0);
+    this->normals[2] = vec3(0.0, 0.0, 1.0);
+    this->normals[3] = vec3(0.0, 0.0, 1.0);
+    this->normals[4] = vec3(0.0, 0.0, 1.0);
+    this->normals[5] = vec3(0.0, 0.0, 1.0);
+    this->normals[6] = vec3(0.0, 0.0, -1.0);
+    this->normals[7] = vec3(0.0, 0.0, -1.0);
+    this->normals[8] = vec3(0.0, 0.0, -1.0);
+    this->normals[9] = vec3(0.0, 0.0, -1.0);
+    this->normals[10] = vec3(0.0, 0.0, -1.0);
+    this->normals[11] = vec3(0.0, 0.0, -1.0);
 }

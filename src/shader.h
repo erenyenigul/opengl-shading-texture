@@ -2,13 +2,10 @@
 #define SHADER_H
 
 // fragment shading of sphere model
-#include <GLFW/glfw3.h>
 #if defined(__APPLE__)
 #include <OpenGL/gl3.h>
-#include <OpenGL/gl3ext.h>
 #else
 #include <GL/gl.h>
-#include <GL/glu.h>
 #endif
 
 #include <iostream>

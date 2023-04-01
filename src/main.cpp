@@ -23,15 +23,6 @@ using namespace std;
 typedef Angel::vec4 point4;
 typedef Angel::vec4 color4;
 
-void display(GLFWwindow *window, SceneObject& ball)
-{
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    ball.display();
-
-    glfwSwapBuffers(window);
-}
-
 //--------------------------------------------
 void keyboard(unsigned char key, int x, int y)
 {
@@ -68,13 +59,13 @@ void reshape(int width, int height)
 
 void adjustFOV(GLFWwindow *window, Shader &shader, int width, int height)
 {
-    glViewport(0, 0, width, height);
+    
+    GLfloat aspect_ratio = ((float) width) / height;
 
-    GLfloat aspect_ratio = GLfloat(width) / height;
-    
-    mat4 projection = Ortho(-15.0f, aspect_ratio * 15.0f, -15.0f, 15.0f, -1.0f, 1.0f);
-    
+    mat4 projection = Ortho(-15.0f, aspect_ratio * 15.0f, -15.0f, 15.0f, -15.0f, 15.0f);
+
     shader.setUniformMatrix4fv("Projection", projection);
+
 }
 
 GLFWwindow *createWindow(int width, int height)
@@ -85,7 +76,7 @@ GLFWwindow *createWindow(int width, int height)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    
+
     GLFWwindow *window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Homework 1", NULL, NULL);
 
     if (window == NULL)
@@ -107,29 +98,32 @@ void destroyWindow(GLFWwindow *window)
 //----------------------------------------------------------------------
 int main(int argc, char **argv)
 {
+    
     GLFWwindow *window = createWindow(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
     glfwMakeContextCurrent(window);
 
     Shader shader("src/shader/vshader.glsl", "src/shader/fshader.glsl");
     shader.use();
 
     adjustFOV(window, shader, SCREEN_WIDTH, SCREEN_HEIGHT);
-
-    SceneObject object(vec4(0.0, 0.0, 0.0, 0.0), shader);
+    
+    Cube object(vec4(-12.0, 20, 0.0, 0.0), shader);
 
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
 
     while (!glfwWindowShouldClose(window))
     {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+     
         object.update();
-        display(window, object);
+        object.display();
+
+        glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
     destroyWindow(window);
-
     return 0;
 }

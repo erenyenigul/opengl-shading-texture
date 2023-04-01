@@ -26,23 +26,19 @@ class SceneObject
 {
 
 public:
-    SceneObject(vec4 position, Shader &shader);
+    SceneObject(vec4 position, Shader &shader, int numVertices);
 
     void update();
     void display();
 
-    int NumTimesToSubdivide = 5;
-    int NumTriangles = 4096;
+protected:
+    int numVertices = 0;
 
-    // (4 faces)^(NumTimesToSubdivide + 1)
-    int NumVertices = 3 * NumTriangles;
+    virtual void form();
 
-private:
-    void initSphere();
-
-    vec4 position = vec4(-10.0, 10.0, 0.0, 0.0);
-    vec4 speed = vec4(.0002, .0, 0.0, 0.0);
-    vec4 acceleration = vec4(0.0, -0.001, 0.0, 0.0);
+    vec4 position = vec4(-10.0, 20.0, 0.0, 0.0);
+    vec4 speed = vec4(.065, .0, 0.0, 0.0);
+    vec4 acceleration = vec4(0.0, -0.01, 0.0, 0.0);
 
     GLuint vao = 0;
     
@@ -53,11 +49,42 @@ private:
     point4 *points;
     vec3 *normals;
 
+    void configGl();
+
     void tetrahedron(int count);
     void divide_triangle(const point4 &a, const point4 &b,
                          const point4 &c, int count);
     void triangle(const point4 &a, const point4 &b, const point4 &c);
     point4 unit(const point4 &p);
+};
+
+
+class Ball : public SceneObject
+{
+
+public:
+    Ball(vec4 position, Shader &shader);
+
+private:
+    void form();
+    
+    int Index = 0;
+
+    void tetrahedron(int count);
+    void divide_triangle(const point4 &a, const point4 &b,
+                         const point4 &c, int count);
+    void triangle(const point4 &a, const point4 &b, const point4 &c);
+    point4 unit(const point4 &p);
+};
+
+class Cube : public SceneObject
+{
+
+public:
+    Cube(vec4 position, Shader &shader);
+
+private:
+    void form();
 };
 
 #endif
