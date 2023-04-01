@@ -12,10 +12,11 @@
 #include <math.h>
 
 #include "Angel.h"
+#include "shader.h"
 
 #define FLOOR_Y_POS -13.0
 
-void Ball::triangle(const point4 &a, const point4 &b, const point4 &c)
+void SceneObject::triangle(const point4 &a, const point4 &b, const point4 &c)
 {
     vec3 normal = normalize(cross(b - a, c - b));
     this->normals[Index] = normal;
@@ -29,7 +30,7 @@ void Ball::triangle(const point4 &a, const point4 &b, const point4 &c)
     this->Index++;
 }
 
-point4 Ball::unit(const point4 &p)
+point4 SceneObject::unit(const point4 &p)
 {
     float len = p.x * p.x + p.y * p.y + p.z * p.z;
     point4 t;
@@ -41,8 +42,8 @@ point4 Ball::unit(const point4 &p)
     return t;
 }
 
-void Ball::divide_triangle(const point4 &a, const point4 &b,
-                           const point4 &c, int count)
+void SceneObject::divide_triangle(const point4 &a, const point4 &b,
+                                  const point4 &c, int count)
 {
     if (count > 0)
     {
@@ -60,7 +61,7 @@ void Ball::divide_triangle(const point4 &a, const point4 &b,
     }
 }
 
-void Ball::tetrahedron(int count)
+void SceneObject::tetrahedron(int count)
 {
     point4 v[4] = {
         vec4(0.0, 0.0, 1.0, 1.0),
@@ -74,10 +75,9 @@ void Ball::tetrahedron(int count)
     divide_triangle(v[0], v[2], v[3], count);
 }
 
-Ball::Ball(vec4 position)
+SceneObject::SceneObject(vec4 position, Shader &shader)
+    : position{position}, shader{shader}
 {
-    position = position;
-
     this->points = new point4[NumVertices];
     this->normals = new vec3[NumVertices];
 
@@ -97,44 +97,15 @@ Ball::Ball(vec4 position)
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(point4) * NumVertices, this->points);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(point4) * NumVertices,
                     sizeof(vec3) * NumVertices, this->normals);
-}
-
-void Ball::update()
-{
-    if (this->position.y < FLOOR_Y_POS)
-    {
-        this->speed.y = -this->speed.y * 0.8f;
-        this->position.y = FLOOR_Y_POS + 0.1;
-    }
-
-    this->speed += this->acceleration;
-    this->position += this->speed;
-}
-
-void Ball::display()
-{   
-    glUniform4fv(this->positionLoc, 1, this->position);
-
-    glBindVertexArray(this->vao);
-
-    glDrawArrays(GL_TRIANGLES, 0, this->NumVertices);
-}
-
-void Ball::attachShader(GLuint program)
-{
-    this->positionLoc = glGetUniformLocation(program, "positionAtT");
-    
-    glUniform4fv(this->positionLoc, 1, this->position);   
 
     // set up vertex arrays
-    GLuint vPosition = glGetAttribLocation(program, "vPosition");
+    GLuint vPosition = shader.getAttribLocation("vPosition");
     glEnableVertexAttribArray(vPosition);
     glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-    
 
-    GLuint vNormal = glGetAttribLocation(program, "vNormal");
+    GLuint vNormal = shader.getAttribLocation("vNormal");
     glEnableVertexAttribArray(vNormal);
-    glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(point4)*this->NumVertices));
+    glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(point4) * this->NumVertices));
 
     // Initialize shader lighting parameters
     point4 light_position(0.0, 0.0, 2.0, 0.0);
@@ -151,20 +122,35 @@ void Ball::attachShader(GLuint program)
     color4 diffuse_product = light_diffuse * material_diffuse;
     color4 specular_product = light_specular * material_specular;
 
-    glUniform4fv(glGetUniformLocation(program, "AmbientProduct"),
-                 1, ambient_product);
-    glUniform4fv(glGetUniformLocation(program, "DiffuseProduct"),
-                 1, diffuse_product);
-    glUniform4fv(glGetUniformLocation(program, "SpecularProduct"),
-                 1, specular_product);
-    glUniform4fv(glGetUniformLocation(program, "LightPosition"),
-                 1, light_position);
-    glUniform1f(glGetUniformLocation(program, "Shininess"),
-                material_shininess);
-
+    shader.setUniform4fv("AmbientProduct", ambient_product);
+    shader.setUniform4fv("DiffuseProduct", diffuse_product);
+    shader.setUniform4fv("SpecularProduct", specular_product);
+    shader.setUniform4fv("LightPosition", light_position);
+    shader.setUniform4fv("Shininess", material_shininess);
 }
 
-void Ball::initSphere()
+void SceneObject::update()
+{
+    if (this->position.y < FLOOR_Y_POS)
+    {
+        this->speed.y = -this->speed.y * 0.8f;
+        this->position.y = FLOOR_Y_POS + 0.1;
+    }
+
+    this->speed += this->acceleration;
+    this->position += this->speed;
+}
+
+void SceneObject::display()
+{
+    shader.setUniform4fv("positionAtT", this->position);
+
+    glBindVertexArray(this->vao);
+
+    glDrawArrays(GL_TRIANGLES, 0, this->NumVertices);
+}
+
+void SceneObject::initSphere()
 {
     tetrahedron(this->NumTimesToSubdivide);
 }

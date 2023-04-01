@@ -13,6 +13,7 @@
 #include <math.h>
 
 #include "Angel.h"
+#include "shader.h"
 
 #define SCREEN_WIDTH 1024
 #define SCREEN_HEIGHT 512
@@ -21,15 +22,14 @@
 typedef Angel::vec4 point4;
 typedef Angel::vec4 color4;
 
-class Ball
+class SceneObject
 {
 
 public:
-    Ball(vec4 position);
+    SceneObject(vec4 position, Shader &shader);
 
     void update();
     void display();
-    void attachShader(GLuint program);
 
     int NumTimesToSubdivide = 5;
     int NumTriangles = 4096;
@@ -44,8 +44,9 @@ private:
     vec4 speed = vec4(.0002, .0, 0.0, 0.0);
     vec4 acceleration = vec4(0.0, -0.001, 0.0, 0.0);
 
-    GLuint positionLoc = 0;
     GLuint vao = 0;
+    
+    Shader &shader;
 
     int Index = 0;
 
