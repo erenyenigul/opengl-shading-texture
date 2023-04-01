@@ -9,7 +9,6 @@ out  vec3 fL;
 uniform mat4 ModelView;
 uniform vec4 LightPosition;
 uniform mat4 Projection;
-
 uniform vec4 positionAtT;
 
 void main() {
@@ -18,11 +17,9 @@ void main() {
     fE = vPosition.xyz;
     fL = LightPosition.xyz;
 
-    /*
     if( LightPosition.w != 0.0 ) {
         fL = LightPosition.xyz - vPosition.xyz;
-      }
-    */
-
-    gl_Position =  Projection *( vPosition + positionAtT ) ;
+    }
+    
+    gl_Position = Projection*( vPosition + positionAtT)  ;
 }
