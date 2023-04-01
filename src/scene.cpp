@@ -15,10 +15,9 @@
 
 #define FLOOR_Y_POS -13.0
 
-Ball::Ball(vec4 position_, GLuint positionLoc_)
+Ball::Ball(vec4 position)
 {
-    position = position_;
-    positionLoc = positionLoc_;
+    position = position;
 }
 
 void Ball::update()
@@ -36,4 +35,9 @@ void Ball::update()
 void Ball::display()
 {
     glUniform4fv(this->positionLoc, 1, this->position);
+}
+
+void Ball::setUniform(GLuint loc)
+{
+    this->positionLoc = loc;
 }

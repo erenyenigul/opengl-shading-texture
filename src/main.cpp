@@ -30,14 +30,11 @@ point4 points[NumVertices];
 vec3 normals[NumVertices];
 
 // Model-view and projection matrices uniform location
-GLuint ModelView, Projection, positionAtTLoc;
+GLuint ModelView, Projection;
 //----------------------------------------------------------------------
 
 int Index = 0;
-
-vec4 positionAtT = vec4(-10.0, 10.0, 0.0, 0.0);
-vec4 speed = vec4(.01, .0, 0.0, 0.0);
-vec4 acceleration = vec4(0.0, -0.001, 0.0, 0.0);
+Ball ball(vec4(-10.0, 10.0, 0.0, 0.0));
 
 void triangle(const point4 &a, const point4 &b, const point4 &c)
 {
@@ -127,7 +124,7 @@ void init(void)
     GLuint program = initShader("src/shader/vshader.glsl", "src/shader/fshader.glsl");
     glUseProgram(program);
 
-    positionAtTLoc = glGetUniformLocation(program, "positionAtT");
+    ball.setUniform(glGetUniformLocation(program, "positionAtT"));
 
     // set up vertex arrays
     GLuint vPosition = glGetAttribLocation(program, "vPosition");
@@ -163,7 +160,7 @@ void init(void)
                  1, light_position);
     glUniform1f(glGetUniformLocation(program, "Shininess"),
                 material_shininess);
-
+    
     // Retrieve transformation uniform variable locations
     ModelView = glGetUniformLocation(program, "ModelView");
     Projection = glGetUniformLocation(program, "Projection");
@@ -180,27 +177,15 @@ void init(void)
 
 void updateScene()
 {
-    speed += acceleration;
-
-   
-
-    positionAtT += speed;
+    ball.update();
 }
 
 //----------------------------------------------------------------------
 void display(GLFWwindow *window)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    point4 at(0.0, 0.0, 0.0, 1.0);
-
-    point4 eye(.0, .0, .2, 1.0);
-    vec4 up(0.0, 1.0, 0.0, 0.0);
-
-    mat4 model_view = LookAt(eye, at, up);
-
-    glUniformMatrix4fv(ModelView, 16, GL_TRUE, model_view);
-
-    glUniform4fv(positionAtTLoc, 1, positionAtT);
+  
+    ball.display();
 
     glDrawArrays(GL_TRIANGLES, 0, NumVertices);
     glfwSwapBuffers(window);
