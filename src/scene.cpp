@@ -90,6 +90,10 @@ void SceneObject::display()
     glDrawArrays(GL_TRIANGLES, 0, this->numVertices);
 }
 
+void SceneObject::form()
+{
+}
+
 void Ball::triangle(const point4 &a, const point4 &b, const point4 &c)
 {
     vec3 normal = normalize(cross(b - a, c - b));
