@@ -16,65 +16,6 @@
 
 #define FLOOR_Y_POS -13.5
 
-void SceneObject::triangle(const point4 &a, const point4 &b, const point4 &c)
-{
-    vec3 normal = normalize(cross(b - a, c - b));
-    this->normals[Index] = normal;
-    this->points[Index] = a;
-    this->Index++;
-    this->normals[Index] = normal;
-    this->points[Index] = b;
-    this->Index++;
-    this->normals[Index] = normal;
-    this->points[Index] = c;
-    this->Index++;
-}
-
-point4 SceneObject::unit(const point4 &p)
-{
-    float len = p.x * p.x + p.y * p.y + p.z * p.z;
-    point4 t;
-    if (len > DivideByZeroTolerance)
-    {
-        t = p / sqrt(len);
-        t.w = 1.0;
-    }
-    return t;
-}
-
-void SceneObject::divide_triangle(const point4 &a, const point4 &b,
-                                  const point4 &c, int count)
-{
-    if (count > 0)
-    {
-        point4 v1 = unit(a + b);
-        point4 v2 = unit(a + c);
-        point4 v3 = unit(b + c);
-        divide_triangle(a, v1, v2, count - 1);
-        divide_triangle(c, v2, v3, count - 1);
-        divide_triangle(b, v3, v1, count - 1);
-        divide_triangle(v1, v3, v2, count - 1);
-    }
-    else
-    {
-        triangle(a, b, c);
-    }
-}
-
-void SceneObject::tetrahedron(int count)
-{
-    point4 v[4] = {
-        vec4(0.0, 0.0, 1.0, 1.0),
-        vec4(0.0, 0.942809, -0.333333, 1.0),
-        vec4(-0.816497, -0.471405, -0.333333, 1.0),
-        vec4(0.816497, -0.471405, -0.333333, 1.0)};
-
-    divide_triangle(v[0], v[1], v[2], count);
-    divide_triangle(v[3], v[2], v[1], count);
-    divide_triangle(v[0], v[3], v[1], count);
-    divide_triangle(v[0], v[2], v[3], count);
-}
-
 SceneObject::SceneObject(vec4 position, Shader &shader, int numVertices)
     : position{position}, shader{shader}, points{new point4[numVertices]}, normals{new vec3[numVertices]}
 {
@@ -148,13 +89,6 @@ void SceneObject::display()
 
     glDrawArrays(GL_TRIANGLES, 0, this->numVertices);
 }
-
-void SceneObject::form()
-{
-    puts("form");
-}
-
-// Ball
 
 void Ball::triangle(const point4 &a, const point4 &b, const point4 &c)
 {

@@ -32,10 +32,6 @@ public:
     void display();
 
 protected:
-    int numVertices = 0;
-
-    virtual void form();
-
     vec4 position = vec4(-10.0, 20.0, 0.0, 0.0);
     vec4 speed = vec4(.065, .0, 0.0, 0.0);
     vec4 acceleration = vec4(0.0, -0.01, 0.0, 0.0);
@@ -44,18 +40,12 @@ protected:
     
     Shader &shader;
 
-    int Index = 0;
-
     point4 *points;
     vec3 *normals;
+    int numVertices = 0;
 
     void configGl();
-
-    void tetrahedron(int count);
-    void divide_triangle(const point4 &a, const point4 &b,
-                         const point4 &c, int count);
-    void triangle(const point4 &a, const point4 &b, const point4 &c);
-    point4 unit(const point4 &p);
+    virtual void form();
 };
 
 
