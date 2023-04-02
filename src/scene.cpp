@@ -147,7 +147,7 @@ void SceneObject::update()
 {
     double time = glfwGetTime();
     double delta = time - this->previousTime;
-    double min_refresh_time = 0.05;
+    double min_refresh_time = 0.01;
     
     if (delta > min_refresh_time)
     {
@@ -237,7 +237,7 @@ void Ball::tetrahedron(int count)
 
 void Ball::form()
 {
-    tetrahedron(5);
+    tetrahedron(4);
 }
 
 Ball::Ball(vec4 position, Shader &shader)

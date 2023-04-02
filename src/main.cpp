@@ -40,7 +40,13 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     case 'h':
     case 'H':
         if (action == GLFW_PRESS){
-            std::cout << "Jumping Stuff Usage\ni -- initialize the pose (top left corner of the window) \nc -- switch between two colors (of your choice), which is used to draw lines or triangles. \nh -- help; print explanation of your input control (simply to the command line) \nq -- quit (exit) the program.\n";
+            std::cout << "Jumping Stuff Usage\n"
+            "i -- initialize the pose (top left corner of the window) \n"
+            "c -- switch between two colors (of your choice), which is used to draw lines or triangles. \n"
+            "h -- help; print explanation of your input control (simply to the command line) \n"
+            "q -- quit (exit) the program.\n"
+            "mouse left button -- switch between wireframe and solid mode \n"
+            "mouse right button -- switch between cube and sphere \n";
         }
         break;
     case 'c':
@@ -52,23 +58,6 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     case 'I':
         object->revert();
         break;
-    case GLFW_KEY_LEFT:
-        if (action == GLFW_PRESS)
-        {
-            isWireframe = !isWireframe;
-            glPolygonMode(GL_FRONT_AND_BACK, isWireframe ? GL_LINE : GL_FILL);
-        }
-        break;
-    case GLFW_KEY_RIGHT:
-        if (action == GLFW_PRESS)
-        {
-            isBall = !isBall;
-            if(isBall)
-                object = new Ball(INIT_POS, *shader);
-            else
-                object = new Cube(INIT_POS, *shader);
-        }
-        break;
     case 033: // Escape Key
     case 'q':
     case 'Q':
@@ -76,6 +65,32 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         break;
     }
 }
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+    if ( action == GLFW_PRESS ) {
+        switch( button ) {
+            case GLFW_MOUSE_BUTTON_LEFT:
+                if (action == GLFW_PRESS)
+                {
+                    isWireframe = !isWireframe;
+                    glPolygonMode(GL_FRONT_AND_BACK, isWireframe ? GL_LINE : GL_FILL);
+                }
+                break;
+            case GLFW_MOUSE_BUTTON_RIGHT:
+                if (action == GLFW_PRESS)
+                {
+                    isBall = !isBall;
+                    if(isBall)
+                        object = new Ball(INIT_POS, *shader);
+                    else
+                        object = new Cube(INIT_POS, *shader);
+                }
+                break;
+        }
+    }
+}
+
 //----------------------------------------------------------------------
 
 
@@ -143,6 +158,7 @@ int main(int argc, char **argv)
 
     GLFWwindow *window = createWindow(SCREEN_WIDTH, SCREEN_HEIGHT);
     glfwSetKeyCallback(window, key_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetWindowSizeCallback(window, reshape);
     glfwMakeContextCurrent(window);
 
