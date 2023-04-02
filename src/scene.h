@@ -34,9 +34,10 @@ public:
     void switchColor();
 
 protected:
+    double previousTime = glfwGetTime();
     vec4 position = vec4(-10.0, 20.0, 0.0, 0.0);
-    vec4 speed = vec4(.065, .0, 0.0, 0.0);
-    vec4 acceleration = vec4(0.0, -0.01, 0.0, 0.0);
+    vec4 speed = vec4(2.0, .0, 0.0, 0.0);
+    vec4 acceleration = vec4(0.0, -20.8, 0.0, 0.0);
 
     GLuint vao = 0;
     

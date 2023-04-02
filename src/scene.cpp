@@ -145,14 +145,18 @@ void SceneObject::revert()
 
 void SceneObject::update()
 {
+    double time = glfwGetTime();
+    double delta = time - this->previousTime;
+
     if (this->position.y < FLOOR_Y_POS)
     {
         this->speed.y = -this->speed.y * 0.8f;
         this->position.y = FLOOR_Y_POS + 0.1;
     }
 
-    this->speed += this->acceleration;
-    this->position += this->speed;
+    this->speed += this->acceleration * delta;
+    this->position += this->speed * delta;
+    this->previousTime = time;
 }
 
 void SceneObject::display()
