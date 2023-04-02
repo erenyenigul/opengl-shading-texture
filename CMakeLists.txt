@@ -3,8 +3,10 @@ project(main)
 
 include_directories(/usr/local/include)
 include_directories(include)
+include_directories(/opt/homebrew/include)
 
 link_directories(/usr/local/lib)
+link_directories(/opt/homebrew/lib)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -w")
 
