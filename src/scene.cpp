@@ -19,7 +19,7 @@
 SceneObject::SceneObject(vec4 position, Shader &shader, int numVertices)
     : position{position},
       initialPosition{position},
-      initialSpeed{vec4(.065, .0, 0.0, 0.0)},
+      initialSpeed{vec4(2.0, .0, 0.0, 0.0)},
       shader{shader},
       points{new point4[numVertices]},
       normals{new vec3[numVertices]},
@@ -147,16 +147,20 @@ void SceneObject::update()
 {
     double time = glfwGetTime();
     double delta = time - this->previousTime;
-
-    if (this->position.y < FLOOR_Y_POS)
+    double min_refresh_time = 0.05;
+    
+    if (delta > min_refresh_time)
     {
-        this->speed.y = -this->speed.y * 0.8f;
-        this->position.y = FLOOR_Y_POS + 0.1;
-    }
+        if (this->position.y < FLOOR_Y_POS)
+            {
+                this->speed.y = -this->speed.y * 0.8f;
+                this->position.y = FLOOR_Y_POS + 0.1;
+            }
 
-    this->speed += this->acceleration * delta;
-    this->position += this->speed * delta;
-    this->previousTime = time;
+        this->speed += this->acceleration * delta;
+        this->position += this->speed * delta;
+        this->previousTime = time;
+    }
 }
 
 void SceneObject::display()
