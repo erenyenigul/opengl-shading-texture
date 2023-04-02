@@ -20,14 +20,44 @@ using namespace std;
 #define SCREEN_WIDTH 1024
 #define SCREEN_HEIGHT 512
 
+#define INIT_POS vec4(-10.0, 15.0, 0.0, 0.0)
+
 typedef Angel::vec4 point4;
 typedef Angel::vec4 color4;
 
+// Global variables
+SceneObject *object;
+Shader *shader;
+
+bool isWireframe = false;
+bool isBall = false;
+
 //--------------------------------------------
-void keyboard(unsigned char key, int x, int y)
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     switch (key)
     {
+    case 'i':
+    case 'I':
+        object->revert();
+        break;
+    case GLFW_KEY_LEFT:
+        if (action == GLFW_PRESS)
+        {
+            isWireframe = !isWireframe;
+            glPolygonMode(GL_FRONT_AND_BACK, isWireframe ? GL_LINE : GL_FILL);
+        }
+        break;
+    case GLFW_KEY_RIGHT:
+        if (action == GLFW_PRESS)
+        {
+            isBall = !isBall;
+            if(isBall)
+                object = new Ball(INIT_POS, *shader);
+            else
+                object = new Cube(INIT_POS, *shader);
+        }
+        break;
     case 033: // Escape Key
     case 'q':
     case 'Q':
@@ -59,13 +89,12 @@ void reshape(int width, int height)
 
 void adjustFOV(GLFWwindow *window, Shader &shader, int width, int height)
 {
-    
-    GLfloat aspect_ratio = ((float) width) / height;
+
+    GLfloat aspect_ratio = ((float)width) / height;
 
     mat4 projection = Ortho(-15.0f, aspect_ratio * 15.0f, -15.0f, 15.0f, -15.0f, 15.0f);
 
     shader.setUniformMatrix4fv("Projection", projection);
-
 }
 
 GLFWwindow *createWindow(int width, int height)
@@ -98,17 +127,17 @@ void destroyWindow(GLFWwindow *window)
 //----------------------------------------------------------------------
 int main(int argc, char **argv)
 {
-    
-    GLFWwindow *window = createWindow(SCREEN_WIDTH, SCREEN_HEIGHT);
 
+    GLFWwindow *window = createWindow(SCREEN_WIDTH, SCREEN_HEIGHT);
+    glfwSetKeyCallback(window, key_callback);
     glfwMakeContextCurrent(window);
 
-    Shader shader("src/shader/vshader.glsl", "src/shader/fshader.glsl");
-    shader.use();
+    shader = new Shader("src/shader/vshader.glsl", "src/shader/fshader.glsl");
+    shader->use();
 
-    adjustFOV(window, shader, SCREEN_WIDTH, SCREEN_HEIGHT);
-    
-    Cube object(vec4(-12.0, 20, 0.0, 0.0), shader);
+    adjustFOV(window, *shader, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    object = new Cube(INIT_POS, *shader);
 
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
@@ -116,9 +145,9 @@ int main(int argc, char **argv)
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-     
-        object.update();
-        object.display();
+
+        object->update();
+        object->display();
 
         glfwSwapBuffers(window);
         glfwPollEvents();

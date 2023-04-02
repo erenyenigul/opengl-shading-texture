@@ -30,6 +30,7 @@ public:
 
     void update();
     void display();
+    void revert();
 
 protected:
     vec4 position = vec4(-10.0, 20.0, 0.0, 0.0);
@@ -46,6 +47,10 @@ protected:
 
     void configGl();
     virtual void form();
+
+private:
+    vec4 initialPosition;
+    vec4 initialSpeed;
 };
 
 

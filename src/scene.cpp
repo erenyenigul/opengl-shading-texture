@@ -17,17 +17,22 @@
 #define FLOOR_Y_POS -13.5
 
 SceneObject::SceneObject(vec4 position, Shader &shader, int numVertices)
-    : position{position}, shader{shader}, points{new point4[numVertices]}, normals{new vec3[numVertices]}
-{
-    this->numVertices = numVertices;
-}
+    : position{position}, 
+    initialPosition{position}, 
+    initialSpeed{vec4(.065, .0, 0.0, 0.0)},
+    shader{shader}, 
+    points{new point4[numVertices]}, 
+    normals{new vec3[numVertices]},
+    numVertices{numVertices}
+{}
 
-void SceneObject::configGl(){
+void SceneObject::configGl()
+{
     // Create a vertex array object
     glGenVertexArrays(1, &this->vao);
     glBindVertexArray(this->vao);
+    
     // Create and initialize a buffer object
-
     GLuint buffer;
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
@@ -48,13 +53,22 @@ void SceneObject::configGl(){
     glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(point4) * this->numVertices));
 
     // Initialize shader lighting parameters
-    point4 light_position(0.0, 0.0, 2.0, 0.0);
-    color4 light_ambient(0.2, 0.2, 0.2, 1.0);
-    color4 light_diffuse(1.0, 1.0, 1.0, 1.0);
+    point4 light_position(0.0, 0.0, 1.0, 0.0);
+    color4 light_ambient(1, 0., 0., .0);
+    color4 light_diffuse(1, 1, 1, 0);
+    color4 light_specular(10, 10, 1, 0);
+    color4 material_ambient(0, 10, 0, 0);
+    color4 material_specular(10, 0.0, 0, 0);
+    color4 material_diffuse(1.0, 0.8, 0.0, 1.0);
+
+/*
+    point4 light_position(0.0, 0.0, 1.0, 0.0);
+    color4 light_ambient(1.2, 0.2, 0.2, 1.0);
+    color4 light_diffuse(2.0, 1.0, 1.0, 1.0);
     color4 light_specular(1.0, 1.0, 1.0, 1.0);
     color4 material_ambient(1.0, 0.0, 1.0, 1.0);
     color4 material_diffuse(1.0, 0.8, 0.0, 1.0);
-    color4 material_specular(1.0, 0.0, 1.0, 1.0);
+    color4 material_specular(10.0, 0.0, 1.0, 1.0);*/
 
     float material_shininess = 5.0;
 
@@ -67,6 +81,12 @@ void SceneObject::configGl(){
     shader.setUniform4fv("SpecularProduct", specular_product);
     shader.setUniform4fv("LightPosition", light_position);
     shader.setUniform4fv("Shininess", material_shininess);
+}
+
+void SceneObject::revert()
+{
+    this->position = this->initialPosition;
+    this->speed = this->initialSpeed;
 }
 
 void SceneObject::update()
@@ -158,20 +178,21 @@ void Ball::form()
     tetrahedron(5);
 }
 
-Ball::Ball(vec4 position, Shader& shader)
-: SceneObject(position, shader, 4 * 4096)
+Ball::Ball(vec4 position, Shader &shader)
+    : SceneObject(position, shader, 4 * 4096)
 {
     form();
     configGl();
 }
 
-Cube::Cube(vec4 position, Shader& shader) : SceneObject(position, shader, 12)
+Cube::Cube(vec4 position, Shader &shader) : SceneObject(position, shader, 12)
 {
     form();
     configGl();
 }
 
-void Cube::form(){    
+void Cube::form()
+{
     // this->points containing 12 different vertices that form 6 faces
     // this->normals containing 12 different normals that form 6 faces
     // this->numVertices = 12
