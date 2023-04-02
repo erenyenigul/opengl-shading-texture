@@ -37,7 +37,12 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 {
     switch (key)
     {
-
+    case 'h':
+    case 'H':
+        if (action == GLFW_PRESS){
+            std::cout << "Jumping Stuff Usage\ni -- initialize the pose (top left corner of the window) \nc -- switch between two colors (of your choice), which is used to draw lines or triangles. \nh -- help; print explanation of your input control (simply to the command line) \nq -- quit (exit) the program.\n";
+        }
+        break;
     case 'c':
     case 'C':
     if (action == GLFW_PRESS)
@@ -72,10 +77,20 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     }
 }
 //----------------------------------------------------------------------
-void reshape(int width, int height)
-{
-    glViewport(0, 0, width, height);
 
+
+void adjustFOV(GLFWwindow *window, Shader &shader, int width, int height)
+{
+
+    GLfloat aspect_ratio = ((float)width) / height;
+
+    mat4 projection = Ortho(-15.0f, aspect_ratio * 15.0f, -15.0f, 15.0f, -15.0f, 15.0f);
+
+    shader.setUniformMatrix4fv("Projection", projection);
+}
+
+void reshape(GLFWwindow *window, int width, int height)
+{
     GLfloat left = -10.0, right = 10.0;
     GLfloat top = 10.0, bottom = -10.0;
     GLfloat zNear = -20.0, zFar = 20.0;
@@ -91,16 +106,8 @@ void reshape(int width, int height)
         top /= aspect;
         bottom /= aspect;
     }
-}
 
-void adjustFOV(GLFWwindow *window, Shader &shader, int width, int height)
-{
-
-    GLfloat aspect_ratio = ((float)width) / height;
-
-    mat4 projection = Ortho(-15.0f, aspect_ratio * 15.0f, -15.0f, 15.0f, -15.0f, 15.0f);
-    
-    shader.setUniformMatrix4fv("Projection", projection);
+    adjustFOV(window, *shader, width, height);
 }
 
 GLFWwindow *createWindow(int width, int height)
@@ -136,13 +143,14 @@ int main(int argc, char **argv)
 
     GLFWwindow *window = createWindow(SCREEN_WIDTH, SCREEN_HEIGHT);
     glfwSetKeyCallback(window, key_callback);
+    glfwSetWindowSizeCallback(window, reshape);
     glfwMakeContextCurrent(window);
 
     shader = new Shader("src/shader/vshader.glsl", "src/shader/fshader.glsl");
     shader->use();
-
+    
     adjustFOV(window, *shader, SCREEN_WIDTH, SCREEN_HEIGHT);
-
+    
     object = new Cube(INIT_POS, *shader);
 
     glEnable(GL_DEPTH_TEST);
