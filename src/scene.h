@@ -31,6 +31,7 @@ public:
     void update();
     void display();
     void revert();
+    void switchColor();
 
 protected:
     vec4 position = vec4(-10.0, 20.0, 0.0, 0.0);
@@ -43,6 +44,8 @@ protected:
 
     point4 *points;
     vec3 *normals;
+    
+    bool isRed = true;
     int numVertices = 0;
 
     void configGl();

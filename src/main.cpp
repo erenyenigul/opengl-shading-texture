@@ -37,6 +37,12 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 {
     switch (key)
     {
+
+    case 'c':
+    case 'C':
+    if (action == GLFW_PRESS)
+        object->switchColor();
+        break;
     case 'i':
     case 'I':
         object->revert();
@@ -93,7 +99,7 @@ void adjustFOV(GLFWwindow *window, Shader &shader, int width, int height)
     GLfloat aspect_ratio = ((float)width) / height;
 
     mat4 projection = Ortho(-15.0f, aspect_ratio * 15.0f, -15.0f, 15.0f, -15.0f, 15.0f);
-
+    
     shader.setUniformMatrix4fv("Projection", projection);
 }
 
