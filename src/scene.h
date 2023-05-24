@@ -28,10 +28,12 @@ class SceneObject
 public:
     SceneObject(vec4 position, Shader &shader, int numVertices);
 
+    void transform(mat4 transformation);
     void update();
     void display();
     void revert();
     void switchColor();
+    vec4 getPosition();
 
 protected:
     double previousTime = glfwGetTime();
@@ -51,6 +53,8 @@ protected:
 
     void configGl();
     virtual void form();
+
+    mat4 transformation;
 
 private:
     vec4 initialPosition;

@@ -20,7 +20,8 @@ using namespace std;
 #define SCREEN_WIDTH 1024
 #define SCREEN_HEIGHT 512
 
-#define INIT_POS vec4(-10.0, 15.0, 0.0, 0.0)
+#define INIT_POSX vec4(-10.0, 15.0, 0.0, 0.0)
+#define INIT_POS vec4(0.0, 0.0, 0.0, 0.0)
 
 typedef Angel::vec4 point4;
 typedef Angel::vec4 color4;
@@ -77,16 +78,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
                     glPolygonMode(GL_FRONT_AND_BACK, isWireframe ? GL_LINE : GL_FILL);
                 }
                 break;
-            case GLFW_MOUSE_BUTTON_RIGHT:
-                if (action == GLFW_PRESS)
-                {
-                    isBall = !isBall;
-                    if(isBall)
-                        object = new Ball(INIT_POS, *shader);
-                    else
-                        object = new Cube(INIT_POS, *shader);
-                }
-                break;
         }
     }
 }
@@ -100,8 +91,10 @@ void adjustFOV(GLFWwindow *window, Shader &shader, int width, int height)
     GLfloat aspect_ratio = ((float)width) / height;
 
     mat4 projection = Ortho(-15.0f, aspect_ratio * 15.0f, -15.0f, 15.0f, -15.0f, 15.0f);
+    mat4 modelView = LookAt(vec4(0.0, 0.0, 10.0, 1.0), vec4(0.0, 0.0, 0.0, 1.0), vec4(0.0, 1.0, 0.0, 1.0));
 
     shader.setUniformMatrix4fv("Projection", projection);
+    shader.setUniformMatrix4fv("ModelView", modelView);
 }
 
 void reshape(GLFWwindow *window, int width, int height)
@@ -152,10 +145,34 @@ void destroyWindow(GLFWwindow *window)
     glfwTerminate();
 }
 
+void shading(){
+    // Initialize shader lighting parameters
+    point4 light_position(0, 0, 1, 0.0);
+
+    color4 light_ambient(0.2f, 0.2f, 0.2f, 0);
+    color4 light_diffuse(0.5f, 0.5f, 0.5f, 0);
+    color4 light_specular(1.0f, 1.0f, 1.0f, 0);
+
+    color4 material_ambient(1.0f, 0.5f, 0.31f, 0);
+    color4 material_specular(0.5f, 0.5f, 0.5f, 0);
+    color4 material_diffuse(1.0f, 0.5f, 0.31f, 1.0);
+
+    float material_shininess = 32.0f;
+
+    color4 ambient_product = light_ambient * material_ambient;
+    color4 diffuse_product = light_diffuse * material_diffuse;
+    color4 specular_product = light_specular * material_specular;
+
+    shader->setUniform4fv("AmbientProduct", ambient_product);
+    shader->setUniform4fv("DiffuseProduct", diffuse_product);
+    shader->setUniform4fv("SpecularProduct", specular_product);
+    shader->setUniform4fv("LightPosition", light_position);
+    shader->setUniform4fv("Shininess", material_shininess);
+}
+
 //----------------------------------------------------------------------
 int main(int argc, char **argv)
 {
-
     GLFWwindow *window = createWindow(SCREEN_WIDTH, SCREEN_HEIGHT);
     glfwSetKeyCallback(window, key_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
@@ -167,20 +184,32 @@ int main(int argc, char **argv)
     
     adjustFOV(window, *shader, SCREEN_WIDTH, SCREEN_HEIGHT);
     
-    object = new Cube(INIT_POS, *shader);
-
+    object = new Ball(INIT_POS, *shader);
+    object->transform(Scale(3, 3, 3));
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+
+    shading();
+
+    Ball o2 = Ball(INIT_POS*0.1, *shader);
+
+    vec4 lightPosition(0, 0, 1, 0.0);
 
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        object->update();
+        //object->update();
+        o2.update();
+        o2.display();
         object->display();
+        
+        shader->setUniform4fv("LightPosition", lightPosition);
+        lightPosition.y -= 0.001;
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+
     }
 
     destroyWindow(window);

@@ -23,8 +23,20 @@ SceneObject::SceneObject(vec4 position, Shader &shader, int numVertices)
       shader{shader},
       points{new point4[numVertices]},
       normals{new vec3[numVertices]},
-      numVertices{numVertices}
+      numVertices{numVertices},
+      transformation{mat4(1.0)}
 {
+    transformation = Translate(initialPosition[0], initialPosition[1], initialPosition[2]);
+}
+
+void SceneObject::transform(mat4 transformation)
+{
+    this->transformation = transformation * this->transformation;
+}
+
+vec4 SceneObject::getPosition()
+{
+    return this->transformation * vec4(0,0,0,1);
 }
 
 void SceneObject::configGl()
@@ -52,35 +64,6 @@ void SceneObject::configGl()
     GLuint vNormal = shader.getAttribLocation("vNormal");
     glEnableVertexAttribArray(vNormal);
     glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(point4) * this->numVertices));
-
-    // Initialize shader lighting parameters
-    point4 light_position(0.0, 0.0, 1.0, 0.0);
-    color4 light_ambient(1, 0., 0., .0);
-    color4 light_diffuse(1, 1, 1, 0);
-    color4 light_specular(10, 10, 1, 0);
-    color4 material_ambient(0, 10, 0, 0);
-    color4 material_specular(10, 0.0, 0, 0);
-    color4 material_diffuse(1.0, 0.8, 0.0, 1.0);
-    /*
-        point4 light_position(0.0, 0.0, 1.0, 0.0);
-        color4 light_ambient(1.2, 0.2, 0.2, 1.0);
-        color4 light_diffuse(2.0, 1.0, 1.0, 1.0);
-        color4 light_specular(1.0, 1.0, 1.0, 1.0);
-        color4 material_ambient(1.0, 0.0, 1.0, 1.0);
-        color4 material_diffuse(1.0, 0.8, 0.0, 1.0);
-        color4 material_specular(10.0, 0.0, 1.0, 1.0);*/
-
-    float material_shininess = 5.0;
-
-    color4 ambient_product = light_ambient * material_ambient;
-    color4 diffuse_product = light_diffuse * material_diffuse;
-    color4 specular_product = light_specular * material_specular;
-
-    shader.setUniform4fv("AmbientProduct", ambient_product);
-    shader.setUniform4fv("DiffuseProduct", diffuse_product);
-    shader.setUniform4fv("SpecularProduct", specular_product);
-    shader.setUniform4fv("LightPosition", light_position);
-    shader.setUniform4fv("Shininess", material_shininess);
 }
 
 void SceneObject::switchColor()
@@ -95,33 +78,34 @@ void SceneObject::switchColor()
     glEnableVertexAttribArray(vNormal);
     glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(point4) * this->numVertices));
 
-    point4 light_position   ; 
-    color4 light_ambient    ;
-    color4 light_diffuse  ;
-    color4 light_specular   ;
+    point4 light_position;
+    color4 light_ambient;
+    color4 light_diffuse;
+    color4 light_specular;
     color4 material_ambient;
     color4 material_specular;
-    color4 material_diffuse ; 
+    color4 material_diffuse;
 
     if (this->isRed)
     {
-         light_position    = point4(0.0, 0.0, 1.0, 0.0);
-         light_ambient     = color4(1, 0., 0., .0);
-         light_diffuse     = color4(1, 1, 1, 0);
-         light_specular    = color4(10, 10, 1, 0);
-         material_ambient  = color4(0, 10, 0, 0);
-         material_specular = color4(10, 0.0, 0, 0);
-         material_diffuse  = color4(1.0, 0.8, 0.0, 1.0);
+        light_position = point4(0.0, 0.0, 1.0, 0.0);
+        light_ambient = color4(1, 0., 0., .0);
+        light_diffuse = color4(1, 1, 1, 0);
+        light_specular = color4(10, 10, 1, 0);
+        material_ambient = color4(0, 10, 0, 0);
+        material_specular = color4(10, 0.0, 0, 0);
+        material_diffuse = color4(1.0, 0.8, 0.0, 1.0);
     }
     else
     {
-            light_position    = point4(0.0, 0.0, 1.0, 0.0);
-            light_ambient     = color4(1.2, 0.2, 0.2, 1.0);
-            light_diffuse     = color4(2.0, 1.0, 1.0, 1.0);
-            light_specular    = color4(1.0, 1.0, 1.0, 1.0);
-            material_ambient  = color4(1.0, 0.0, 1.0, 1.0);
-            material_diffuse  = color4(1.0, 0.8, 0.0, 1.0);
-            material_specular = color4(10.0, 0.0, 1.0, 1.0);
+        light_position = point4(0.0, 0.0, 1.0, 0.0);
+        light_ambient = color4(1.2, 0.2, 0.2, 1.0);
+        light_diffuse = color4(2.0, 1.0, 1.0, 1.0);
+        light_specular = color4(1.0, 1.0, 1.0, 1.0);
+
+        material_ambient = color4(1.0, 0.0, 1.0, 1.0);
+        material_diffuse = color4(1.0, 0.8, 0.0, 1.0);
+        material_specular = color4(10.0, 0.0, 1.0, 1.0);
     }
 
     float material_shininess = 5.0;
@@ -139,8 +123,8 @@ void SceneObject::switchColor()
 
 void SceneObject::revert()
 {
-    this->position = this->initialPosition;
-    this->speed = this->initialSpeed;
+    this->transformation = Translate(initialPosition[0], initialPosition[1], initialPosition[2]);
+    this->speed = initialSpeed;
 }
 
 void SceneObject::update()
@@ -148,24 +132,27 @@ void SceneObject::update()
     double time = glfwGetTime();
     double delta = time - this->previousTime;
     double min_refresh_time = 0.01;
-    
+
     if (delta > min_refresh_time)
     {
-        if (this->position.y < FLOOR_Y_POS)
-            {
-                this->speed.y = -this->speed.y * 0.8f;
-                this->position.y = FLOOR_Y_POS + 0.1;
-            }
+        vec4 position = this->getPosition();
+
+        if (position.y < FLOOR_Y_POS)
+        {
+            this->speed.y = abs(this->speed.y) * 0.8f;
+        }
 
         this->speed += this->acceleration * delta;
-        this->position += this->speed * delta;
+        vec4 scaled = this->speed * delta;
+        this->transform(Translate(scaled[0], scaled[1], scaled[2]));
+
         this->previousTime = time;
     }
 }
 
 void SceneObject::display()
 {
-    shader.setUniform4fv("positionAtT", this->position);
+    shader.setUniformMatrix4fv("Transformation", this->transformation);
 
     glBindVertexArray(this->vao);
 
