@@ -16,7 +16,7 @@ uniform mat4 Projection;
 void main()
 {
     // Transform vertex position into camera (eye) coordinates
-    vec3 pos = (ModelView * Transformation* vPosition).xyz;
+    vec3 pos = (ModelView * Transformation * vPosition).xyz;
     
     fN = (ModelView * vec4(vNormal, 0.0)).xyz; // normal direction in camera coordinates
 
@@ -28,6 +28,5 @@ void main()
         fL = LightPosition.xyz - pos;  //point light source
     }
 
-    
-    gl_Position = Projection * ModelView * Transformation* vPosition;
+    gl_Position = Projection * ModelView * Transformation * vPosition;
 }

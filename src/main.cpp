@@ -22,6 +22,7 @@ using namespace std;
 
 #define INIT_POSX vec4(-10.0, 15.0, 0.0, 0.0)
 #define INIT_POS vec4(0.0, 0.0, 0.0, 0.0)
+#define INIT_LIGHT_POS vec4(10.0, 0.0, 0.0, 0.0)
 
 typedef Angel::vec4 point4;
 typedef Angel::vec4 color4;
@@ -32,6 +33,7 @@ Shader *shader;
 
 bool isWireframe = false;
 bool isBall = false;
+bool lightFollow = false;
 
 //--------------------------------------------
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -46,8 +48,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
             "c -- switch between two colors (of your choice), which is used to draw lines or triangles. \n"
             "h -- help; print explanation of your input control (simply to the command line) \n"
             "q -- quit (exit) the program.\n"
-            "mouse left button -- switch between wireframe and solid mode \n"
-            "mouse right button -- switch between cube and sphere \n";
+            "mouse left button -- switch between wireframe and solid mode \n";
         }
         break;
     case 'c':
@@ -63,6 +64,14 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     case 'q':
     case 'Q':
         exit(EXIT_SUCCESS);
+        break;
+    case 'L':
+    case 'l':
+        if (action == GLFW_PRESS)
+            lightFollow = !lightFollow;
+
+        if(!lightFollow)
+            shader->setUniform4fv("LightPosition", INIT_LIGHT_POS);
         break;
     }
 }
@@ -87,12 +96,11 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 
 void adjustFOV(GLFWwindow *window, Shader &shader, int width, int height)
 {
-
     GLfloat aspect_ratio = ((float)width) / height;
 
-    mat4 projection = Ortho(-15.0f, aspect_ratio * 15.0f, -15.0f, 15.0f, -15.0f, 15.0f);
-    mat4 modelView = LookAt(vec4(0.0, 0.0, 10.0, 1.0), vec4(0.0, 0.0, 0.0, 1.0), vec4(0.0, 1.0, 0.0, 1.0));
-
+    mat4 projection = Perspective(45.0, aspect_ratio, 0.1, 100.0);
+    mat4 modelView = LookAt(vec4(0.0, 0.0, 40.0, 1.0), vec4(0.0, 0.0, 1.0, 1.0), vec4(0.0, 1.0, 0.0, 1.0));
+    
     shader.setUniformMatrix4fv("Projection", projection);
     shader.setUniformMatrix4fv("ModelView", modelView);
 }
@@ -184,7 +192,7 @@ int main(int argc, char **argv)
     
     adjustFOV(window, *shader, SCREEN_WIDTH, SCREEN_HEIGHT);
     
-    object = new Ball(INIT_POS, *shader);
+    object = new Ball(INIT_POSX, *shader);
     object->transform(Scale(3, 3, 3));
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
@@ -193,19 +201,25 @@ int main(int argc, char **argv)
 
     Ball o2 = Ball(INIT_POS*0.1, *shader);
 
-    vec4 lightPosition(0, 0, 1, 0.0);
-
+    shader->setUniform4fv("LightPosition", INIT_LIGHT_POS);
+    
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        //object->update();
+        object->update();
         o2.update();
         o2.display();
         object->display();
-        
-        shader->setUniform4fv("LightPosition", lightPosition);
-        lightPosition.y -= 0.001;
+
+        //lightPosition.y -= 0.009;
+
+        if(lightFollow){
+            vec4 pos = object->getPosition();
+            pos.z += 10;
+
+            shader->setUniform4fv("LightPosition", pos);
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();

@@ -224,11 +224,11 @@ void Ball::tetrahedron(int count)
 
 void Ball::form()
 {
-    tetrahedron(4);
+    tetrahedron(8);
 }
 
 Ball::Ball(vec4 position, Shader &shader)
-    : SceneObject(position, shader, 4 * 4096)
+    : SceneObject(position, shader, 3*pow(4,(8 + 1)))
 {
     form();
     configGl();
