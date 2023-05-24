@@ -32,7 +32,7 @@ void main()
             specular = vec4(0.0, 0.0, 0.0, 1.0);
         }
 
-    fcolor = ambient + diffuse + specular;
-    fcolor.a = 1.0;
+        fcolor = ambient + diffuse + specular;
+        fcolor.a = 1.0;
 } 
 

@@ -99,7 +99,7 @@ void adjustFOV(GLFWwindow *window, Shader &shader, int width, int height)
     GLfloat aspect_ratio = ((float)width) / height;
 
     mat4 projection = Perspective(45.0, aspect_ratio, 0.1, 100.0);
-    mat4 modelView = LookAt(vec4(0.0, 0.0, 40.0, 1.0), vec4(0.0, 0.0, 1.0, 1.0), vec4(0.0, 1.0, 0.0, 1.0));
+    mat4 modelView = LookAt(vec4(0.0, 0.0, 100.0, 1.0), vec4(0.0, 0.0, 1.0, 1.0), vec4(0.0, 1.0, 0.0, 1.0));
     
     shader.setUniformMatrix4fv("Projection", projection);
     shader.setUniformMatrix4fv("ModelView", modelView);
@@ -162,10 +162,10 @@ void shading(){
     color4 light_specular(1.0f, 1.0f, 1.0f, 0);
 
     color4 material_ambient(1.0f, 0.5f, 0.31f, 0);
-    color4 material_specular(0.5f, 0.5f, 0.5f, 0);
+    color4 material_specular(0.0001, 0.0001, 0.0001, 0);
     color4 material_diffuse(1.0f, 0.5f, 0.31f, 1.0);
 
-    float material_shininess = 32.0f;
+    float material_shininess = 1.0f;
 
     color4 ambient_product = light_ambient * material_ambient;
     color4 diffuse_product = light_diffuse * material_diffuse;
@@ -192,8 +192,7 @@ int main(int argc, char **argv)
     
     adjustFOV(window, *shader, SCREEN_WIDTH, SCREEN_HEIGHT);
     
-    object = new Ball(INIT_POSX, *shader);
-    object->transform(Scale(3, 3, 3));
+    object = new Ball(INIT_POS, *shader);
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
 
@@ -203,6 +202,10 @@ int main(int argc, char **argv)
 
     shader->setUniform4fv("LightPosition", INIT_LIGHT_POS);
     
+    object->transform(Scale(10,10,10)*Translate(10,-20,0));
+
+    vec4 lightPosition = INIT_LIGHT_POS;
+
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -217,8 +220,8 @@ int main(int argc, char **argv)
         if(lightFollow){
             vec4 pos = object->getPosition();
             pos.z += 10;
-
-            shader->setUniform4fv("LightPosition", pos);
+            lightPosition = RotateY(0.5)*lightPosition;
+            shader->setUniform4fv("LightPosition", lightPosition);
         }
 
         glfwSwapBuffers(window);
