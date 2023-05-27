@@ -9,16 +9,22 @@
 #endif
 
 #include <iostream>
+#include <vector>
 #include <math.h>
 
-#include "Angel.h"
 #include "scene.h"
+#include "Angel.h"
 
 struct Shader{
 		const char *filename;
 		GLuint program;
-
+	
 		Shader(const char *vShaderFile, const char *fShaderFile)
+		{
+			program = initShader(vShaderFile, fShaderFile);
+		}
+
+		void switchProgram(const char *vShaderFile, const char *fShaderFile)
 		{
 			program = initShader(vShaderFile, fShaderFile);
 		}

@@ -30,6 +30,72 @@ struct Material
     float shininess;
 };
 
+class Camera
+{
+public:
+    Camera(Shader *shader) : shader{shader},
+                             projection{mat4(1.0)},
+                             modelView{mat4(1.0)}
+    {
+        configGl();
+    }
+
+    void lookAt(vec4 eye, vec4 at, vec4 up)
+    {
+        this->eye = eye;
+        this->at = at;
+        this->up = up;
+
+        configGl();
+    }
+
+    void setProjection(mat4 p)
+    {
+        this->projection = p;
+        configGl();
+    }
+
+    void configGl()
+    {
+        modelView = LookAt(eye, at, up);
+
+        shader->setUniformMatrix4fv("ModelView", modelView);
+        shader->setUniformMatrix4fv("Projection", projection);
+    }
+
+    void setEye(vec4 e)
+    {
+        this->eye = e;
+        configGl();
+    }
+
+    void setAt(vec4 a)
+    {
+        this->at = a;
+        configGl();
+    }
+
+    void setUp(vec4 u)
+    {
+        this->up = u;
+        configGl();
+    }
+
+    vec4 getEye()
+    {
+        return this->eye;
+    }
+
+private:
+    Shader *shader;
+    mat4 modelView;
+    mat4 projection;
+
+    vec4 eye;
+    vec4 at;
+    vec4 up;
+};
+
 class Light
 {
 
@@ -47,39 +113,80 @@ public:
         diffuse = d;
         specular = sp;
 
+        configGl();
+    }
+
+    void configGl()
+    {
         shader->setUniform4fv("LightPosition", position);
-        shader->setUniform4fv("AmbientLight", ambient);
-        shader->setUniform4fv("DiffuseLight", diffuse);
-        shader->setUniform4fv("SpecularLight", specular);
+        shader->setUniform4fv("AmbientLight", ambient * ambientEnabled);
+        shader->setUniform4fv("DiffuseLight", diffuse * diffuseEnabled);
+        shader->setUniform4fv("SpecularLight", specular * specularEnabled);
     }
 
     void setPosition(vec4 p)
     {
         position = p;
-        shader->setUniform4fv("LightPosition", position);
+        configGl();
     }
 
     void setAmbient(color4 a)
     {
         ambient = a;
-        shader->setUniform4fv("AmbientLight", ambient);
+        configGl();
     }
 
     void setDiffuse(color4 d)
     {
         diffuse = d;
-        shader->setUniform4fv("DiffuseLight", diffuse);
+        configGl();
     }
 
     void setSpecular(color4 s)
     {
         specular = s;
-        shader->setUniform4fv("SpecularLight", specular);
+        configGl();
     }
 
     vec4 getPosition()
     {
         return position;
+    }
+
+    void disableAmbient()
+    {
+        ambientEnabled = false;
+        configGl();
+    }
+
+    void enableAmbient()
+    {
+        ambientEnabled = true;
+        configGl();
+    }
+
+    void disableDiffuse()
+    {
+        diffuseEnabled = false;
+        configGl();
+    }
+
+    void enableDiffuse()
+    {
+        diffuseEnabled = true;
+        configGl();
+    }
+
+    void disableSpecular()
+    {
+        specularEnabled = false;
+        configGl();
+    }
+
+    void enableSpecular()
+    {
+        specularEnabled = true;
+        configGl();
     }
 
 private:
@@ -88,6 +195,10 @@ private:
     color4 specular;
     vec4 position;
     Shader *shader;
+
+    bool ambientEnabled = true;
+    bool diffuseEnabled = true;
+    bool specularEnabled = true;
 };
 
 class SceneObject
@@ -101,6 +212,8 @@ public:
     void display();
     void revert();
     void switchColor();
+    void configGl();
+
     void setMaterial(Material m);
     Material &getMaterial();
     vec4 getPosition();
@@ -121,7 +234,6 @@ protected:
     bool isRed = true;
     int numVertices = 0;
 
-    void configGl();
     virtual void form();
 
     mat4 transformation;

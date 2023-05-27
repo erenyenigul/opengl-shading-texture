@@ -17,40 +17,79 @@
 
 using namespace std;
 
-#define SCREEN_WIDTH 1024
-#define SCREEN_HEIGHT 512
+#define SCREEN_WIDTH 1024.0
+#define SCREEN_HEIGHT 512.0
 
 #define INIT_POS vec4(-10.0, 15.0, 0.0, 0.0)
-#define INIT_LIGHT_POS vec4(10.0, 0.0, 0.0, 1.0)
+#define INIT_LIGHT_POS vec4(1.0, 0.0, 0.0, 0.0)
+#define ORIGIN vec4(0.0, 0.0, 0.0, 0.0)
 
 typedef Angel::vec4 point4;
 typedef Angel::vec4 color4;
 
-// Global variables
 SceneObject *object;
+Camera *camera;
 Shader *shader;
 Light *light;
 
 Material metal{
-    color4(0.1745, 0.01175, 0.01175, 0),
-    color4(0.61424, 0.04136, 0.04136, 0),
-    color4(0.727811, 0.626959, 0.626959, 0),
-    0.001f};
+    color4(0.1745, 0.01175, 0.01175, 1),
+    color4(0.61424, 0.14136, 0.04136, 1),
+    color4(0.727811, 0.626959, 0.626959, 1),
+    64};
 
-Material plastic
-{
-    color4(0.0, 0.0, 0.0, 0),
-    color4(0.5, 0, 0, 0),
-    color4(0.7, 0.6, 0.6, 0),
-    .25
-};
+Material plastic{
+    color4(0.1, 0.01, 0.01, 1),
+    color4(0.5, 0.1, 0.1, 1),
+    color4(0.7, 0.6, 0.6, 1),
+    10000000};
 
 bool isWireframe = false;
 bool isBall = false;
 bool lightFollow = false;
 bool isMetal = false;
+bool isPhong = false;
 
-//--------------------------------------------
+int colorOffIndex = 0;
+
+void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
+{
+    if (action == GLFW_PRESS)
+    {
+        switch (button)
+        {
+        case GLFW_MOUSE_BUTTON_LEFT:
+            if (action == GLFW_PRESS)
+            {
+                isWireframe = !isWireframe;
+                glPolygonMode(GL_FRONT_AND_BACK, isWireframe ? GL_LINE : GL_FILL);
+            }
+            break;
+        }
+    }
+}
+
+GLFWwindow *createWindow(int width, int height)
+{
+    glfwInit();
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+
+    GLFWwindow *window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Homework 1", NULL, NULL);
+
+    if (window == NULL)
+    {
+        cout << "Failed to create window!" << endl;
+        glfwTerminate();
+        exit(1);
+    }
+
+    return window;
+}
+
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     switch (key)
@@ -106,79 +145,65 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         }
         isMetal = !isMetal;
         break;
-    }
-}
-
-void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
-{
-    if (action == GLFW_PRESS)
-    {
-        switch (button)
+    case 's':
+    case 'S':
+        if (action == GLFW_PRESS)
         {
-        case GLFW_MOUSE_BUTTON_LEFT:
-            if (action == GLFW_PRESS)
+            if (isPhong)
             {
-                isWireframe = !isWireframe;
-                glPolygonMode(GL_FRONT_AND_BACK, isWireframe ? GL_LINE : GL_FILL);
+                shader->switchProgram("src/shader/gouraud/vshader.glsl", "src/shader/gouraud/fshader.glsl");
             }
+            else
+            {
+                shader->switchProgram("src/shader/phong/vshader.glsl", "src/shader/phong/fshader.glsl");
+            }
+            isPhong = !isPhong;
+
+            shader->use();
+            object->configGl();
+            light->configGl();
+            camera->configGl();
+
+            glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+        }
+        break;
+
+    case 'w':
+    case 'W':
+        camera->setEye(camera->getEye() + vec4(0.0, 0.0, 0.5, 0.0));
+        break;
+    case 'z':
+    case 'Z':
+        camera->setEye(camera->getEye() + vec4(0.0, 0.0, -0.5, 0.0));
+        break;
+    case 'o':
+    case 'O':
+        if(action != GLFW_PRESS) return;
+        colorOffIndex = (colorOffIndex + 1) % 4;
+
+        light->enableAmbient();
+        light->enableDiffuse();
+        light->enableSpecular();
+        switch (colorOffIndex)
+        {
+        case 1:
+            light->disableAmbient();
+            break;
+        case 2:
+            light->disableDiffuse();
+            break;
+        case 3:
+            light->disableSpecular();
+            break;
+        default:
             break;
         }
     }
 }
 
-//----------------------------------------------------------------------
-
-void initView(GLFWwindow *window, Shader &shader, int width, int height)
-{
-    GLfloat aspect_ratio = ((float)width) / height;
-
-    mat4 projection = Perspective(45.0, aspect_ratio, 0.1, 100.0);
-    mat4 modelView = LookAt(vec4(0.0, 0.0, 38.0, 1.0), vec4(0.0, 0.0, 1.0, 1.0), vec4(0.0, 1.0, 0.0, 1.0));
-
-    shader.setUniformMatrix4fv("Projection", projection);
-    shader.setUniformMatrix4fv("ModelView", modelView);
-}
-
 void reshape(GLFWwindow *window, int width, int height)
 {
-    GLfloat left = -10.0, right = 10.0;
-    GLfloat top = 10.0, bottom = -10.0;
-    GLfloat zNear = -20.0, zFar = 20.0;
-    GLfloat aspect = GLfloat(width) / height;
-
-    if (aspect > 1.0)
-    {
-        left *= aspect;
-        right *= aspect;
-    }
-    else
-    {
-        top /= aspect;
-        bottom /= aspect;
-    }
-
-    initView(window, *shader, width, height);
-}
-
-GLFWwindow *createWindow(int width, int height)
-{
-    glfwInit();
-
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-
-    GLFWwindow *window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Homework 1", NULL, NULL);
-
-    if (window == NULL)
-    {
-        cout << "Failed to create window!" << endl;
-        glfwTerminate();
-        exit(1);
-    }
-
-    return window;
+    camera->setProjection(Perspective(45.0, ((float)width) / height, 0.1, 100.0));
 }
 
 int main(int argc, char **argv)
@@ -191,17 +216,20 @@ int main(int argc, char **argv)
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
-    shader = new Shader("src/shader/vshader.glsl", "src/shader/fshader.glsl");
+    shader = new Shader("src/shader/gouraud/vshader.glsl", "src/shader/gouraud/fshader.glsl");
     shader->use();
 
     light = new Light(shader,
-                      point4(0, 0, 1, 1.0),
-                      color4(1, 1, 1, 0),
-                      color4(1, 1, 1, 0),
-                      color4(.01f, .01f, .01f, 0));
+                      point4(3.001, -3.001, 3.001, 0.0),
+                      color4(0.002, 0.002, 0.002, 0),
+                      color4(1, 1, 1, 1),
+                      color4(1, 1, 1, 0));
 
-    initView(window, *shader, SCREEN_WIDTH, SCREEN_HEIGHT);
     glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+
+    camera = new Camera(shader);
+    camera->setProjection(Perspective(45.0, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1, 100.0));
+    camera->lookAt(vec4(0.0, 0.0, 30.0, 1.0), vec4(0.0, 0.0, 1.0, 1.0), vec4(0.0, 1.0, 0.0, 1.0));
 
     object = new Ball(INIT_POS, *shader);
     object->setMaterial(metal);
