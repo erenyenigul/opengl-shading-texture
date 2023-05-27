@@ -10,15 +10,16 @@ out  vec3 fL;
 
 uniform mat4 ModelView;
 uniform mat4 Transformation;
-uniform vec4 LightPosition;
 uniform mat4 Projection;
+
+uniform vec4 LightPosition;
 
 void main()
 {
     // Transform vertex position into camera (eye) coordinates
     vec3 pos = (ModelView * Transformation * vPosition).xyz;
     
-    fN = (ModelView * vec4(vNormal, 0.0)).xyz; // normal direction in camera coordinates
+    fN = (ModelView * Transformation*vec4(vNormal, 0.0)).xyz; // normal direction in camera coordinates
 
     fV = -pos; //viewer direction in camera coordinates
 

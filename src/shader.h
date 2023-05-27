@@ -47,6 +47,11 @@ struct Shader{
 		{
 			glUniformMatrix4fv(getUniformLocation(name), 1, GL_TRUE, m);
 		}
+
+		void setUniform1f(const char *name, const float &f)
+		{
+			glUniform1f(getUniformLocation(name), f);
+		}
 };
 
 #endif SHADER_H

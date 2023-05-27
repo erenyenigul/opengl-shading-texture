@@ -20,9 +20,8 @@ using namespace std;
 #define SCREEN_WIDTH 1024
 #define SCREEN_HEIGHT 512
 
-#define INIT_POSX vec4(-10.0, 15.0, 0.0, 0.0)
-#define INIT_POS vec4(0.0, 0.0, 0.0, 0.0)
-#define INIT_LIGHT_POS vec4(10.0, 0.0, 0.0, 0.0)
+#define INIT_POS vec4(-10.0, 15.0, 0.0, 0.0)
+#define INIT_LIGHT_POS vec4(10.0, 0.0, 0.0, 1.0)
 
 typedef Angel::vec4 point4;
 typedef Angel::vec4 color4;
@@ -30,10 +29,26 @@ typedef Angel::vec4 color4;
 // Global variables
 SceneObject *object;
 Shader *shader;
+Light *light;
+
+Material metal{
+    color4(0.1745, 0.01175, 0.01175, 0),
+    color4(0.61424, 0.04136, 0.04136, 0),
+    color4(0.727811, 0.626959, 0.626959, 0),
+    0.001f};
+
+Material plastic
+{
+    color4(0.0, 0.0, 0.0, 0),
+    color4(0.5, 0, 0, 0),
+    color4(0.7, 0.6, 0.6, 0),
+    .25
+};
 
 bool isWireframe = false;
 bool isBall = false;
 bool lightFollow = false;
+bool isMetal = false;
 
 //--------------------------------------------
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -42,19 +57,20 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     {
     case 'h':
     case 'H':
-        if (action == GLFW_PRESS){
+        if (action == GLFW_PRESS)
+        {
             std::cout << "Jumping Stuff Usage\n"
-            "i -- initialize the pose (top left corner of the window) \n"
-            "c -- switch between two colors (of your choice), which is used to draw lines or triangles. \n"
-            "h -- help; print explanation of your input control (simply to the command line) \n"
-            "q -- quit (exit) the program.\n"
-            "mouse left button -- switch between wireframe and solid mode \n";
+                         "i -- initialize the pose (top left corner of the window) \n"
+                         "c -- switch between two colors (of your choice), which is used to draw lines or triangles. \n"
+                         "h -- help; print explanation of your input control (simply to the command line) \n"
+                         "q -- quit (exit) the program.\n"
+                         "mouse left button -- switch between wireframe and solid mode \n";
         }
         break;
     case 'c':
     case 'C':
-    if (action == GLFW_PRESS)
-        object->switchColor();
+        if (action == GLFW_PRESS)
+            ;
         break;
     case 'i':
     case 'I':
@@ -70,37 +86,55 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         if (action == GLFW_PRESS)
             lightFollow = !lightFollow;
 
-        if(!lightFollow)
+        if (!lightFollow)
             shader->setUniform4fv("LightPosition", INIT_LIGHT_POS);
+        break;
+    case 'm':
+    case 'M':
+        if (action != GLFW_PRESS)
+            return;
+
+        if (isMetal)
+        {
+
+            object->setMaterial(metal);
+        }
+        else
+        {
+
+            object->setMaterial(plastic);
+        }
+        isMetal = !isMetal;
         break;
     }
 }
 
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 {
-    if ( action == GLFW_PRESS ) {
-        switch( button ) {
-            case GLFW_MOUSE_BUTTON_LEFT:
-                if (action == GLFW_PRESS)
-                {
-                    isWireframe = !isWireframe;
-                    glPolygonMode(GL_FRONT_AND_BACK, isWireframe ? GL_LINE : GL_FILL);
-                }
-                break;
+    if (action == GLFW_PRESS)
+    {
+        switch (button)
+        {
+        case GLFW_MOUSE_BUTTON_LEFT:
+            if (action == GLFW_PRESS)
+            {
+                isWireframe = !isWireframe;
+                glPolygonMode(GL_FRONT_AND_BACK, isWireframe ? GL_LINE : GL_FILL);
+            }
+            break;
         }
     }
 }
 
 //----------------------------------------------------------------------
 
-
-void adjustFOV(GLFWwindow *window, Shader &shader, int width, int height)
+void initView(GLFWwindow *window, Shader &shader, int width, int height)
 {
     GLfloat aspect_ratio = ((float)width) / height;
 
     mat4 projection = Perspective(45.0, aspect_ratio, 0.1, 100.0);
-    mat4 modelView = LookAt(vec4(0.0, 0.0, 100.0, 1.0), vec4(0.0, 0.0, 1.0, 1.0), vec4(0.0, 1.0, 0.0, 1.0));
-    
+    mat4 modelView = LookAt(vec4(0.0, 0.0, 38.0, 1.0), vec4(0.0, 0.0, 1.0, 1.0), vec4(0.0, 1.0, 0.0, 1.0));
+
     shader.setUniformMatrix4fv("Projection", projection);
     shader.setUniformMatrix4fv("ModelView", modelView);
 }
@@ -123,7 +157,7 @@ void reshape(GLFWwindow *window, int width, int height)
         bottom /= aspect;
     }
 
-    adjustFOV(window, *shader, width, height);
+    initView(window, *shader, width, height);
 }
 
 GLFWwindow *createWindow(int width, int height)
@@ -147,38 +181,6 @@ GLFWwindow *createWindow(int width, int height)
     return window;
 }
 
-void destroyWindow(GLFWwindow *window)
-{
-    glfwDestroyWindow(window);
-    glfwTerminate();
-}
-
-void shading(){
-    // Initialize shader lighting parameters
-    point4 light_position(0, 0, 1, 0.0);
-
-    color4 light_ambient(0.2f, 0.2f, 0.2f, 0);
-    color4 light_diffuse(0.5f, 0.5f, 0.5f, 0);
-    color4 light_specular(1.0f, 1.0f, 1.0f, 0);
-
-    color4 material_ambient(1.0f, 0.5f, 0.31f, 0);
-    color4 material_specular(0.0001, 0.0001, 0.0001, 0);
-    color4 material_diffuse(1.0f, 0.5f, 0.31f, 1.0);
-
-    float material_shininess = 1.0f;
-
-    color4 ambient_product = light_ambient * material_ambient;
-    color4 diffuse_product = light_diffuse * material_diffuse;
-    color4 specular_product = light_specular * material_specular;
-
-    shader->setUniform4fv("AmbientProduct", ambient_product);
-    shader->setUniform4fv("DiffuseProduct", diffuse_product);
-    shader->setUniform4fv("SpecularProduct", specular_product);
-    shader->setUniform4fv("LightPosition", light_position);
-    shader->setUniform4fv("Shininess", material_shininess);
-}
-
-//----------------------------------------------------------------------
 int main(int argc, char **argv)
 {
     GLFWwindow *window = createWindow(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -186,49 +188,43 @@ int main(int argc, char **argv)
     glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetWindowSizeCallback(window, reshape);
     glfwMakeContextCurrent(window);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
 
     shader = new Shader("src/shader/vshader.glsl", "src/shader/fshader.glsl");
     shader->use();
-    
-    adjustFOV(window, *shader, SCREEN_WIDTH, SCREEN_HEIGHT);
-    
-    object = new Ball(INIT_POS, *shader);
-    glEnable(GL_DEPTH_TEST);
+
+    light = new Light(shader,
+                      point4(0, 0, 1, 1.0),
+                      color4(1, 1, 1, 0),
+                      color4(1, 1, 1, 0),
+                      color4(.01f, .01f, .01f, 0));
+
+    initView(window, *shader, SCREEN_WIDTH, SCREEN_HEIGHT);
     glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
 
-    shading();
-
-    Ball o2 = Ball(INIT_POS*0.1, *shader);
-
-    shader->setUniform4fv("LightPosition", INIT_LIGHT_POS);
-    
-    object->transform(Scale(10,10,10)*Translate(10,-20,0));
-
-    vec4 lightPosition = INIT_LIGHT_POS;
+    object = new Ball(INIT_POS, *shader);
+    object->setMaterial(metal);
 
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         object->update();
-        o2.update();
-        o2.display();
         object->display();
 
-        //lightPosition.y -= 0.009;
-
-        if(lightFollow){
+        if (lightFollow)
+        {
             vec4 pos = object->getPosition();
             pos.z += 10;
-            lightPosition = RotateY(0.5)*lightPosition;
-            shader->setUniform4fv("LightPosition", lightPosition);
+            light->setPosition(RotateY(0.5) * light->getPosition());
         }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
-
     }
 
-    destroyWindow(window);
+    glfwDestroyWindow(window);
+    glfwTerminate();
     return 0;
 }

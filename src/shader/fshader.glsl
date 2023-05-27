@@ -6,12 +6,17 @@ in  vec3 fN;
 in  vec3 fL;
 in  vec3 fV;
 
-uniform vec4 AmbientProduct, DiffuseProduct, SpecularProduct;
+uniform vec4 AmbientLight, DiffuseLight, SpecularLight;
+uniform vec4 AmbientMaterial, DiffuseMaterial, SpecularMaterial;
 uniform float Shininess;
 out vec4 fcolor;
 
 void main() 
 { 
+        vec4 AmbientProduct = AmbientLight*AmbientMaterial;
+        vec4 DiffuseProduct = DiffuseLight*DiffuseMaterial;
+        vec4 SpecularProduct = SpecularLight*SpecularMaterial;
+        
         // Normalize the input lighting vectors
         vec3 N = normalize(fN);
         vec3 V = normalize(fV);

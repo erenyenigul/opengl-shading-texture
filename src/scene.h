@@ -22,6 +22,74 @@
 typedef Angel::vec4 point4;
 typedef Angel::vec4 color4;
 
+struct Material
+{
+    color4 ambient;
+    color4 diffuse;
+    color4 specular;
+    float shininess;
+};
+
+class Light
+{
+
+public:
+    Light(Shader *s)
+    {
+        shader = s;
+    }
+
+    Light(Shader *s, vec4 p, color4 a, color4 d, color4 sp)
+    {
+        shader = s;
+        position = p;
+        ambient = a;
+        diffuse = d;
+        specular = sp;
+
+        shader->setUniform4fv("LightPosition", position);
+        shader->setUniform4fv("AmbientLight", ambient);
+        shader->setUniform4fv("DiffuseLight", diffuse);
+        shader->setUniform4fv("SpecularLight", specular);
+    }
+
+    void setPosition(vec4 p)
+    {
+        position = p;
+        shader->setUniform4fv("LightPosition", position);
+    }
+
+    void setAmbient(color4 a)
+    {
+        ambient = a;
+        shader->setUniform4fv("AmbientLight", ambient);
+    }
+
+    void setDiffuse(color4 d)
+    {
+        diffuse = d;
+        shader->setUniform4fv("DiffuseLight", diffuse);
+    }
+
+    void setSpecular(color4 s)
+    {
+        specular = s;
+        shader->setUniform4fv("SpecularLight", specular);
+    }
+
+    vec4 getPosition()
+    {
+        return position;
+    }
+
+private:
+    color4 ambient;
+    color4 diffuse;
+    color4 specular;
+    vec4 position;
+    Shader *shader;
+};
+
 class SceneObject
 {
 
@@ -33,6 +101,8 @@ public:
     void display();
     void revert();
     void switchColor();
+    void setMaterial(Material m);
+    Material &getMaterial();
     vec4 getPosition();
 
 protected:
@@ -42,12 +112,12 @@ protected:
     vec4 acceleration = vec4(0.0, -20.8, 0.0, 0.0);
 
     GLuint vao = 0;
-    
+
     Shader &shader;
 
     point4 *points;
     vec3 *normals;
-    
+
     bool isRed = true;
     int numVertices = 0;
 
@@ -56,11 +126,12 @@ protected:
 
     mat4 transformation;
 
+    Material material;
+
 private:
     vec4 initialPosition;
     vec4 initialSpeed;
 };
-
 
 class Ball : public SceneObject
 {
@@ -70,7 +141,7 @@ public:
 
 private:
     void form();
-    
+
     int Index = 0;
 
     void tetrahedron(int count);
