@@ -21,7 +21,7 @@ include_directories(
         ${GLFW_INCLUDE_DIRS}
 ) 
 
-set(SOURCE_FILES include/Angel.h include/CheckError.h include/mat.h include/patches.h include/vec.h include/vertices.h src/shader.cpp src/scene.cpp src/main.cpp)
+set(SOURCE_FILES include/Angel.h include/CheckError.h include/mat.h include/patches.h include/vec.h include/vertices.h src/shader.cpp src/scene.cpp src/main.cpp src/readppm.h)
 
 add_executable(main ${SOURCE_FILES})
 
