@@ -22,9 +22,11 @@ void main() {
     vec3 H = normalize(L + V); 
     vec3 N = normalize(ModelView * Transformation * vec4(vNormal, 0.0)).xyz; // Compute terms in the illumination equation
     
-    vec4 ambient = 0.1*AmbientProduct; // k_a * L_a
+    vec4 ambient = AmbientProduct; // k_a * L_a
+    
     float Kd = max(dot(L, N), 0.0); //set diffuse to 0 if light is behind the surface point
     vec4 diffuse = Kd * DiffuseProduct; // k_d * L_d 
+    
     float Ks = pow(max(dot(N, H), 0.0), Shininess); // ignore specular component if negative 
     vec4 specular = Ks * SpecularProduct; // k_s * L_s //ignore specular component also if light is behind the surface point 
     

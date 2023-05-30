@@ -189,7 +189,7 @@ void Ball::tetrahedron(int count)
 
 void Ball::form()
 {
-    tetrahedron(8);
+    tetrahedron(6);
 }
 
 Ball::Ball(vec4 position, Shader &shader)

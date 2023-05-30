@@ -13,11 +13,16 @@ uniform vec4 LightPosition;
 uniform mat4 Projection;
 
 void main() {
-    vec3 pos = (ModelView * Transformation* vPosition).xyz;
-    fN = (ModelView * Transformation* vec4(vNormal, 0.0)).xyz;
+    vec3 pos = (ModelView * Transformation * vPosition).xyz;
+    
+    fN = (transpose(inverse(ModelView * Transformation)) * vec4(vNormal, 0.0)).xyz;
+    
     fV = -pos;
+    
     fL = LightPosition.xyz;
+    
     if(LightPosition.w != 0.0)
         fL = LightPosition.xyz - pos;
+    
     gl_Position = Projection * ModelView * Transformation * vPosition;
 }

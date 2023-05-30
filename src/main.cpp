@@ -33,13 +33,13 @@ Shader *shader;
 Light *light;
 
 Material metal{
-    color4(0.1745, 0.01175, 0.01175, 1),
+    color4(0.61424, 0.14136, 0.04136, 1),
     color4(0.61424, 0.14136, 0.04136, 1),
     color4(0.727811, 0.626959, 0.626959, 1),
     64};
 
 Material plastic{
-    color4(0.1, 0.01, 0.01, 1),
+    color4(0.5, 0.1, 0.1, 1),
     color4(0.5, 0.1, 0.1, 1),
     color4(0.7, 0.6, 0.6, 1),
     10000000};
@@ -163,8 +163,6 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
             object->configGl();
             light->configGl();
             camera->configGl();
-
-            glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
         }
         break;
 
@@ -220,25 +218,25 @@ int main(int argc, char **argv)
     shader->use();
 
     light = new Light(shader,
-                      point4(3.001, -3.001, 3.001, 0.0),
-                      color4(0.002, 0.002, 0.002, 0),
+                      point4(1.001, -1.001, 1.001, 0.0),
+                      color4(0.3, 0.3, 0.3, 1),
                       color4(1, 1, 1, 1),
-                      color4(1, 1, 1, 0));
+                      color4(1, 1, 1, 1));
 
-    glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     camera = new Camera(shader);
     camera->setProjection(Perspective(45.0, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1, 100.0));
-    camera->lookAt(vec4(0.0, 0.0, 30.0, 1.0), vec4(0.0, 0.0, 1.0, 1.0), vec4(0.0, 1.0, 0.0, 1.0));
+    camera->lookAt(vec4(0.0, 0.0, 10.0, 1.0), vec4(0.0, 0.0, 1.0, 1.0), vec4(0.0, 1.0, 0.0, 1.0));
 
-    object = new Ball(INIT_POS, *shader);
+    object = new Ball(ORIGIN, *shader);
     object->setMaterial(metal);
 
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        object->update();
+        //object->update();
         object->display();
 
         if (lightFollow)

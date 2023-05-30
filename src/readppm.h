@@ -11,7 +11,7 @@
 
 using namespace std;
 
-GLuint * readppm(char *filename) {
+GLubyte * readppm(char *filename) {
     FILE *fd;
     int k, nm, n, m;
     char c;
@@ -19,7 +19,7 @@ GLuint * readppm(char *filename) {
     float s;
     int red, green, blue;
     char b[100];
-    GLuint *image;
+    GLubyte *image;
 
     fd = fopen(filename, "r");
     fscanf(fd, "%[^\n] ", b);
@@ -40,13 +40,13 @@ GLuint * readppm(char *filename) {
     fscanf(fd, "%d %d %d", &n, &m, &k);
     printf("%d rows %d columns max value= %d\n",n,m,k);
     nm = n*m;
-    image = (GLuint *) malloc(3*sizeof(GLuint)*nm);
+    image = (GLubyte *) malloc(3*sizeof(GLubyte)*nm);
     for(i=nm;i>0;i--)
     {
-        fscanf(fd,"%d %d %d",&red, &green, &blue );
-        image[3*nm-3*i]=red;
-        image[3*nm-3*i+1]=green;
-        image[3*nm-3*i+2]=blue;
+        fscanf(fd,"%ud %ud %ud",&red, &green, &blue );
+        image[3*nm-3*i]= (GLubyte) red;
+        image[3*nm-3*i+1]= (GLubyte) green;
+        image[3*nm-3*i+2]= (GLubyte) blue;
     }
 
     return image;
