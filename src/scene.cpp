@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <math.h>
+#include <algorithm>
 
 #include "Angel.h"
 #include "shader.h"
@@ -136,18 +137,31 @@ void SceneObject::form()
 {
 }
 
+vec2 getTexMapping(const point4 &p){
+    double u = atan2(-p.z, p.x)*M_1_PI*0.5+0.5;
+
+    return vec2(0.1 + u, -acos(-p.y)*M_1_PI);
+}
+
 void Ball::triangle(const point4 &a, const point4 &b, const point4 &c)
 {
     vec3 normal = normalize(cross(b - a, c - b));
+
+    this->texCoords[Index] = getTexMapping(a);
     this->normals[Index] = normal;
     this->points[Index] = a;
     this->Index++;
+
+    this->texCoords[Index] =  getTexMapping(b);
     this->normals[Index] = normal;
     this->points[Index] = b;
     this->Index++;
+    
+    this->texCoords[Index] = getTexMapping(c);
     this->normals[Index] = normal;
     this->points[Index] = c;
     this->Index++;
+
 }
 
 point4 Ball::unit(const point4 &p)
@@ -197,7 +211,7 @@ void Ball::tetrahedron(int count)
 
 void Ball::form()
 {
-    tetrahedron(6);
+    tetrahedron(8);
 }
 
 Ball::Ball(vec4 position, Shader &shader)

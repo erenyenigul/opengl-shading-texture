@@ -13,7 +13,7 @@ uniform mat4 Projection;
 
 void main() 
 {
-    color       = vColor;
+    color       = vNormal;
     texCoord    = vTexCoord;
     gl_Position = Projection * ModelView * Transformation * vPosition;
 } 

@@ -95,6 +95,10 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 {
     switch (key)
     {
+    case 'a':
+    case 'A':
+        camera->setEye(RotateY(5.0)*camera->getEye());
+        break;
     case 'h':
     case 'H':
         if (action == GLFW_PRESS)
