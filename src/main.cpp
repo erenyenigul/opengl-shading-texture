@@ -14,6 +14,7 @@
 #include "Angel.h"
 #include "scene.h"
 #include "shader.h"
+#include "readppm.h"
 
 using namespace std;
 
@@ -214,8 +215,28 @@ int main(int argc, char **argv)
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
-    shader = new Shader("src/shader/gouraud/vshader.glsl", "src/shader/gouraud/fshader.glsl");
+    shader = new Shader("src/shader/texture/vshader.glsl", "src/shader/texture/fshader.glsl");
     shader->use();
+
+    GLuint textures[2];
+    bool textureFlag = true; //enable texture mapping
+
+    GLuint  TextureFlagLoc; // texture flag uniform location
+
+    Texture earth = readppm("src/asset/earth.ppm");
+    
+    glGenTextures( 2, textures );
+    glBindTexture( GL_TEXTURE_2D, textures[0] );
+    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, earth.rows, earth.cols, 0,
+		  GL_RGB, GL_UNSIGNED_BYTE, earth.content );
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR); //try here different alternatives
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); //try here different alternatives
+
+    glBindTexture( GL_TEXTURE_2D, textures[0] ); //set current texture
 
     light = new Light(shader,
                       point4(1.001, -1.001, 1.001, 0.0),

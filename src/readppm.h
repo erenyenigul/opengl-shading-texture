@@ -11,7 +11,12 @@
 
 using namespace std;
 
-GLubyte * readppm(char *filename) {
+struct Texture{
+    int rows,cols;
+    GLubyte* content;
+};
+
+Texture readppm(char *filename) {
     FILE *fd;
     int k, nm, n, m;
     char c;
@@ -43,11 +48,11 @@ GLubyte * readppm(char *filename) {
     image = (GLubyte *) malloc(3*sizeof(GLubyte)*nm);
     for(i=nm;i>0;i--)
     {
-        fscanf(fd,"%ud %ud %ud",&red, &green, &blue );
+        fscanf(fd,"%d %d %d",&red, &green, &blue );
         image[3*nm-3*i]= (GLubyte) red;
         image[3*nm-3*i+1]= (GLubyte) green;
         image[3*nm-3*i+2]= (GLubyte) blue;
     }
 
-    return image;
+    return {n, m, image};
 }

@@ -230,6 +230,7 @@ protected:
 
     point4 *points;
     vec3 *normals;
+    vec2 *texCoords;
 
     bool isRed = true;
     int numVertices = 0;

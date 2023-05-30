@@ -23,14 +23,14 @@ SceneObject::SceneObject(vec4 position, Shader &shader, int numVertices)
       shader{shader},
       points{new point4[numVertices]},
       normals{new vec3[numVertices]},
+      texCoords{new vec2[numVertices]},
       numVertices{numVertices},
       transformation{mat4(1.0)},
       material{Material{
-            color4(1.0, 1.0, 1.0, 1.0),
-            color4(1.0, 1.0, 1.0, 1.0),
-            color4(1.0, 1.0, 1.0, 1.0),
-            1.0
-      }}
+          color4(1.0, 1.0, 1.0, 1.0),
+          color4(1.0, 1.0, 1.0, 1.0),
+          color4(1.0, 1.0, 1.0, 1.0),
+          1.0}}
 {
     transformation = Translate(initialPosition[0], initialPosition[1], initialPosition[2]);
 }
@@ -40,7 +40,7 @@ void SceneObject::setMaterial(Material m)
     this->material = m;
 }
 
-Material& SceneObject::getMaterial()
+Material &SceneObject::getMaterial()
 {
     return this->material;
 }
@@ -52,7 +52,7 @@ void SceneObject::transform(mat4 transformation)
 
 vec4 SceneObject::getPosition()
 {
-    return this->transformation * vec4(0,0,0,1);
+    return this->transformation * vec4(0, 0, 0, 1);
 }
 
 void SceneObject::configGl()
@@ -65,12 +65,15 @@ void SceneObject::configGl()
     GLuint buffer;
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(point4) * numVertices + sizeof(vec3) * numVertices,
+    glBufferData(GL_ARRAY_BUFFER, sizeof(point4) * numVertices + sizeof(vec3) * numVertices + sizeof(vec2) * numVertices,
                  NULL, GL_STATIC_DRAW);
 
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(point4) * numVertices, this->points);
-    glBufferSubData(GL_ARRAY_BUFFER, sizeof(point4) * numVertices,
-                    sizeof(vec3) * numVertices, this->normals);
+    int offset = 0;
+    glBufferSubData(GL_ARRAY_BUFFER, offset, sizeof(point4) * numVertices, this->points);
+    offset += sizeof(point4) * numVertices;
+    glBufferSubData(GL_ARRAY_BUFFER, offset, sizeof(vec3) * numVertices, this->normals);
+    offset += sizeof(vec3) * numVertices;
+    glBufferSubData(GL_ARRAY_BUFFER, offset, sizeof(vec2) * numVertices, this->texCoords);
 
     // set up vertex arrays
     GLuint vPosition = shader.getAttribLocation("vPosition");
@@ -80,6 +83,11 @@ void SceneObject::configGl()
     GLuint vNormal = shader.getAttribLocation("vNormal");
     glEnableVertexAttribArray(vNormal);
     glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(point4) * this->numVertices));
+
+    GLuint vTexCoord = shader.getAttribLocation("vTexCoord");
+    glEnableVertexAttribArray(vTexCoord);
+    glVertexAttribPointer(vTexCoord, 2, GL_FLOAT, GL_FALSE, 0,
+                          BUFFER_OFFSET((sizeof(point4) + sizeof(vec3)) * this->numVertices));
 }
 
 void SceneObject::revert()
@@ -193,7 +201,7 @@ void Ball::form()
 }
 
 Ball::Ball(vec4 position, Shader &shader)
-    : SceneObject(position, shader, 3*pow(4,(8 + 1)))
+    : SceneObject(position, shader, 3 * pow(4, (8 + 1)))
 {
     form();
     configGl();
