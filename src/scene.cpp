@@ -139,25 +139,35 @@ void SceneObject::form()
 
 vec2 getTexMapping(const point4 &p){
     double u = atan2(-p.z, p.x)*M_1_PI*0.5+0.5;
+    double v = -acos(-p.y)*M_1_PI;
 
-    return vec2(0.1 + u, -acos(-p.y)*M_1_PI);
+    // margin constant for clipping left and right spaces from texture
+    double m = 0.05;
+
+    return vec2((1-2*m)*u+m, v);
 }
 
 void Ball::triangle(const point4 &a, const point4 &b, const point4 &c)
 {
     vec3 normal = normalize(cross(b - a, c - b));
 
-    this->texCoords[Index] = getTexMapping(a);
+    vec2 a_m = getTexMapping(a);
+    vec2 b_m = getTexMapping(b);
+    vec2 c_m = getTexMapping(c);
+
+    //std::cout << a_m << b_m << c_m << std::endl;
+    
+    this->texCoords[Index] = a_m;
     this->normals[Index] = normal;
     this->points[Index] = a;
     this->Index++;
 
-    this->texCoords[Index] =  getTexMapping(b);
+    this->texCoords[Index] =  b_m;
     this->normals[Index] = normal;
     this->points[Index] = b;
     this->Index++;
     
-    this->texCoords[Index] = getTexMapping(c);
+    this->texCoords[Index] = c_m;
     this->normals[Index] = normal;
     this->points[Index] = c;
     this->Index++;
