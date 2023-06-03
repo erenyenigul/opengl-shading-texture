@@ -15,9 +15,9 @@
 #include "Angel.h"
 #include "shader.h"
 
-#define FLOOR_Y_POS -13.5
+#define FLOOR_Y_POS -10
 
-SceneObject::SceneObject(vec4 position, Shader &shader, int numVertices)
+SceneObject::SceneObject(vec4 position, Shader &shader, int numVertices, float scale)
     : position{position},
       initialPosition{position},
       initialSpeed{vec4(2.0, .0, 0.0, 0.0)},
@@ -27,13 +27,16 @@ SceneObject::SceneObject(vec4 position, Shader &shader, int numVertices)
       texCoords{new vec2[numVertices]},
       numVertices{numVertices},
       transformation{mat4(1.0)},
+      initialTransformation{mat4(1.0)},
+      scale{scale},
       material{Material{
           color4(1.0, 1.0, 1.0, 1.0),
           color4(1.0, 1.0, 1.0, 1.0),
           color4(1.0, 1.0, 1.0, 1.0),
           1.0}}
 {
-    transformation = Translate(initialPosition[0], initialPosition[1], initialPosition[2]);
+    initialTransformation = Translate(initialPosition[0], initialPosition[1], initialPosition[2]) * Scale(scale, scale, scale);
+    transformation = initialTransformation;
 }
 
 void SceneObject::setMaterial(Material m)
@@ -93,7 +96,7 @@ void SceneObject::configGl()
 
 void SceneObject::revert()
 {
-    this->transformation = Translate(initialPosition[0], initialPosition[1], initialPosition[2]);
+    this->transformation = this->initialTransformation;
     this->speed = initialSpeed;
 }
 
@@ -221,57 +224,12 @@ void Ball::tetrahedron(int count)
 
 void Ball::form()
 {
-    tetrahedron(8);
+    tetrahedron(5);
 }
 
-Ball::Ball(vec4 position, Shader &shader)
-    : SceneObject(position, shader, 3 * pow(4, (8 + 1)))
+Ball::Ball(vec4 position, Shader &shader, float scale)
+    : SceneObject(position, shader, 3 * pow(4, (8 + 1)), scale)
 {
     form();
     configGl();
-}
-
-Cube::Cube(vec4 position, Shader &shader) : SceneObject(position, shader, 12)
-{
-    form();
-    configGl();
-}
-
-void Cube::form()
-{
-    // this->points containing 12 different vertices that form 6 faces
-    // this->normals containing 12 different normals that form 6 faces
-    // this->numVertices = 12
-
-    // 6 faces
-    // 2 triangles per face
-
-    // 2 triangles per face
-    // 3 vertices per triangle
-
-    this->points[0] = point4(-2.0, -2.0, 2.0, 1.0);
-    this->points[1] = point4(-2.0, 2.0, 2.0, 1.0);
-    this->points[2] = point4(2.0, 2.0, 2.0, 1.0);
-    this->points[3] = point4(2.0, 2.0, 2.0, 1.0);
-    this->points[4] = point4(2.0, -2.0, 2.0, 1.0);
-    this->points[5] = point4(-2.0, -2.0, 2.0, 1.0);
-    this->points[6] = point4(-2.0, -2.0, -2.0, 1.0);
-    this->points[7] = point4(-2.0, 2.0, -2.0, 1.0);
-    this->points[8] = point4(2.0, 2.0, -2.0, 1.0);
-    this->points[9] = point4(2.0, 2.0, -2.0, 1.0);
-    this->points[10] = point4(2.0, -2.0, -2.0, 1.0);
-    this->points[11] = point4(-2.0, -2.0, -2.0, 1.0);
-
-    this->normals[0] = vec3(0.0, 0.0, 1.0);
-    this->normals[1] = vec3(0.0, 0.0, 1.0);
-    this->normals[2] = vec3(0.0, 0.0, 1.0);
-    this->normals[3] = vec3(0.0, 0.0, 1.0);
-    this->normals[4] = vec3(0.0, 0.0, 1.0);
-    this->normals[5] = vec3(0.0, 0.0, 1.0);
-    this->normals[6] = vec3(0.0, 0.0, -1.0);
-    this->normals[7] = vec3(0.0, 0.0, -1.0);
-    this->normals[8] = vec3(0.0, 0.0, -1.0);
-    this->normals[9] = vec3(0.0, 0.0, -1.0);
-    this->normals[10] = vec3(0.0, 0.0, -1.0);
-    this->normals[11] = vec3(0.0, 0.0, -1.0);
 }

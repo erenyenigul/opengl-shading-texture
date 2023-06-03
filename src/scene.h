@@ -205,7 +205,7 @@ class SceneObject
 {
 
 public:
-    SceneObject(vec4 position, Shader &shader, int numVertices);
+    SceneObject(vec4 position, Shader &shader, int numVertices, float scale);
 
     void transform(mat4 transformation);
     void update();
@@ -238,6 +238,8 @@ protected:
     virtual void form();
 
     mat4 transformation;
+    mat4 initialTransformation;
+    float scale;
 
     Material material;
 
@@ -250,7 +252,7 @@ class Ball : public SceneObject
 {
 
 public:
-    Ball(vec4 position, Shader &shader);
+    Ball(vec4 position, Shader &shader, float scale);
 
 private:
     void form();
@@ -262,16 +264,6 @@ private:
                          const point4 &c, int count);
     void triangle(const point4 &a, const point4 &b, const point4 &c);
     point4 unit(const point4 &p);
-};
-
-class Cube : public SceneObject
-{
-
-public:
-    Cube(vec4 position, Shader &shader);
-
-private:
-    void form();
 };
 
 #endif

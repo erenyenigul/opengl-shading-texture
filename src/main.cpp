@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <math.h>
+#include <string>
 
 #include "Angel.h"
 #include "scene.h"
@@ -21,7 +22,7 @@ using namespace std;
 #define SCREEN_WIDTH 1024.0
 #define SCREEN_HEIGHT 512.0
 
-#define INIT_POS vec4(-10.0, 15.0, 0.0, 0.0)
+#define INIT_POS vec4(-15.0, 11.0, 0.0, 0.0)
 #define INIT_LIGHT_POS vec4(1.0, 0.0, 0.0, 0.0)
 #define ORIGIN vec4(0.0, 0.0, 0.0, 0.0)
 
@@ -32,6 +33,8 @@ SceneObject *object;
 Camera *camera;
 Shader *shader;
 Light *light;
+GLuint textures[2];
+int textureIndex = 0;
 
 Material metal{
     color4(0.61424, 0.14136, 0.04136, 1),
@@ -49,6 +52,7 @@ bool isWireframe = false;
 bool isBall = false;
 bool lightFollow = false;
 bool isMetal = false;
+int displayMode = 0;
 bool isPhong = false;
 
 int colorOffIndex = 0;
@@ -99,15 +103,32 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     case 'A':
         camera->setEye(RotateY(5.0)*camera->getEye());
         break;
+    case 'e':
+    case 'E':
+        if (action == GLFW_PRESS)
+        {
+            glBindTexture(GL_TEXTURE_2D, textures[textureIndex]);
+            textureIndex = (textureIndex + 1) % 2;
+            break;
+        }
     case 'h':
     case 'H':
         if (action == GLFW_PRESS)
         {
-            std::cout << "Jumping Stuff Usage\n"
+            std::cout << "Shading & Texture Ball Usage\n"
                          "i -- initialize the pose (top left corner of the window) \n"
-                         "c -- switch between two colors (of your choice), which is used to draw lines or triangles. \n"
+                         "c -- switch between two colors, which is used to draw lines or triangles. \n"
                          "h -- help; print explanation of your input control (simply to the command line) \n"
                          "q -- quit (exit) the program.\n"
+                         "a -- rotate the camera\n"
+                         "e -- switch between two textures\n"
+                         "l -- switch between light follow mode and light fixed mode\n"
+                         "m -- switch between metal and plastic material\n"
+                         "t -- switch between shading, wireframe, and texture display modes\n"
+                         "s -- switch between phong and gouraud shading\n"
+                         "o -- turn off the specular, diffuse and ambient components one by one\n"
+                         "z -- zoom in\n"
+                         "w -- zoom out\n"
                          "mouse left button -- switch between wireframe and solid mode \n";
         }
         break;
@@ -149,6 +170,34 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
             object->setMaterial(plastic);
         }
         isMetal = !isMetal;
+        break;
+    case 't':
+    case 'T':
+        if (action == GLFW_PRESS)
+        {
+            string folder;
+            switch (displayMode)
+            {
+            case 0:
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                folder = isPhong ? "src/shader/phong/" : "src/shader/gouraud/";
+                shader->switchProgram( (folder + "vshader.glsl").c_str(), (folder + "fshader.glsl").c_str());
+                displayMode = 1;
+                break;
+            case 1:
+                shader->switchProgram("src/shader/texture/vshader.glsl", "src/shader/texture/fshader.glsl");
+                displayMode = 2;
+                break;
+            case 2:
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                displayMode = 0;
+                break;
+            }
+            shader->use();
+            object->configGl();
+            light->configGl();
+            camera->configGl();
+        }
         break;
     case 's':
     case 'S':
@@ -219,15 +268,15 @@ int main(int argc, char **argv)
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
-    shader = new Shader("src/shader/texture/vshader.glsl", "src/shader/texture/fshader.glsl");
+    shader = new Shader("src/shader/gouraud/vshader.glsl", "src/shader/gouraud/fshader.glsl");
     shader->use();
 
-    GLuint textures[2];
     bool textureFlag = true; //enable texture mapping
 
     GLuint  TextureFlagLoc; // texture flag uniform location
 
     Texture earth = readppm("src/asset/earth.ppm");
+    Texture basketball = readppm("src/asset/basketball.ppm");
     
     glGenTextures( 2, textures );
     glBindTexture( GL_TEXTURE_2D, textures[0] );
@@ -237,8 +286,18 @@ int main(int argc, char **argv)
 
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR); //try here different alternatives
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); //try here different alternatives
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+    glBindTexture( GL_TEXTURE_2D, textures[1] );
+    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, basketball.rows, basketball.cols, 0,
+		  GL_RGB, GL_UNSIGNED_BYTE, basketball.content );
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
     glBindTexture( GL_TEXTURE_2D, textures[0] ); //set current texture
 
@@ -252,16 +311,16 @@ int main(int argc, char **argv)
 
     camera = new Camera(shader);
     camera->setProjection(Perspective(45.0, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1, 100.0));
-    camera->lookAt(vec4(0.0, 0.0, 10.0, 1.0), vec4(0.0, 0.0, 1.0, 1.0), vec4(0.0, 1.0, 0.0, 1.0));
+    camera->lookAt(vec4(0.0, 0.0, 30.0, 1.0), vec4(0.0, 0.0, 1.0, 1.0), vec4(0.0, 1.0, 0.0, 1.0));
 
-    object = new Ball(ORIGIN, *shader);
+    object = new Ball(INIT_POS, *shader, 2.0);
     object->setMaterial(metal);
 
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        //object->update();
+        object->update();
         object->display();
 
         if (lightFollow)
