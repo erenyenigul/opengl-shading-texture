@@ -113,9 +113,10 @@ void SceneObject::update()
         if (position.y < FLOOR_Y_POS)
         {
             this->speed.y = abs(this->speed.y) * 0.8f;
+        }else{
+            this->speed += this->acceleration * delta;
         }
-
-        this->speed += this->acceleration * delta;
+        
         vec4 scaled = this->speed * delta;
         this->transform(Translate(scaled[0], scaled[1], scaled[2]));
 
@@ -232,4 +233,26 @@ Ball::Ball(vec4 position, Shader &shader, float scale)
 {
     form();
     configGl();
+}
+
+Floor::Floor(vec4 position, Shader &shader, float scale)
+    :SceneObject(position, shader, 6, scale){
+    form();
+    configGl();
+}
+
+void Floor::form(){
+    this->points[0] = vec4(-1.0, 0.0, -1.0, 1.0);
+    this->points[1] = vec4(-1.0, 0.0, 1.0, 1.0);
+    this->points[2] = vec4(1.0, 0.0, 1.0, 1.0);
+    this->points[3] = vec4(1.0, 0.0, 1.0, 1.0);
+    this->points[4] = vec4(1.0, 0.0, -1.0, 1.0);
+    this->points[5] = vec4(-1.0, 0.0, -1.0, 1.0);
+
+    this->normals[0] = vec3(0.0, 1.0, 0.0);
+    this->normals[1] = vec3(0.0, 1.0, 0.0);
+    this->normals[2] = vec3(0.0, 1.0, 0.0);
+    this->normals[3] = vec3(0.0, 1.0, 0.0);
+    this->normals[4] = vec3(0.0, 1.0, 0.0);
+    this->normals[5] = vec3(0.0, 1.0, 0.0);
 }

@@ -86,6 +86,11 @@ public:
         return this->eye;
     }
 
+    vec4 getAt()
+    {
+        return this->at;
+    }
+
 private:
     Shader *shader;
     mat4 modelView;
@@ -265,5 +270,15 @@ private:
     void triangle(const point4 &a, const point4 &b, const point4 &c);
     point4 unit(const point4 &p);
 };
+
+class Floor : public SceneObject
+{
+public:
+    Floor(vec4 position, Shader &shader, float scale);
+
+private:
+    void form();
+};
+
 
 #endif

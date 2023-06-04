@@ -36,22 +36,43 @@ Light *light;
 GLuint textures[2];
 int textureIndex = 0;
 
-Material metal{
-    color4(0.61424, 0.14136, 0.04136, 1),
+Material metalRed{
+    color4(0.1, 0.1, 0.1, 1),
     color4(0.61424, 0.14136, 0.04136, 1),
     color4(0.727811, 0.626959, 0.626959, 1),
     64};
 
-Material plastic{
-    color4(0.5, 0.1, 0.1, 1),
+Material metalBlue{
+    color4(0.1, 0.1, 0.1, 1),
+    color4(0.04136, 0.14136, 0.61424, 1),
+    color4(0.727811, 0.626959, 0.626959, 1),
+    64};
+
+Material plasticRed{
+    color4(0.1, 0.1, 0.1, 1),
     color4(0.5, 0.1, 0.1, 1),
     color4(0.7, 0.6, 0.6, 1),
     10000000};
 
+Material plasticBlue{
+    color4(0.1, 0.1, 0.1, 1),
+    color4(0.1, 0.1, 0.5, 1),
+    color4(0.6, 0.6, 0.7, 1),
+    10000000};
+
+Material metalWhite{
+    color4(0.1, 0.1, 0.1, 1),
+    color4(1, 1, 1, 1),
+    color4(1, 1, 1, 1),
+    1000};
+
 bool isWireframe = false;
 bool isBall = false;
 bool lightFollow = false;
+
 bool isMetal = false;
+bool isRed = false;
+
 int displayMode = 0;
 bool isPhong = false;
 
@@ -101,7 +122,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     {
     case 'a':
     case 'A':
-        camera->setEye(RotateY(5.0)*camera->getEye());
+        camera->setEye(RotateY(5.0) * camera->getEye());
         break;
     case 'e':
     case 'E':
@@ -134,8 +155,15 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         break;
     case 'c':
     case 'C':
-        if (action == GLFW_PRESS)
-            ;
+        if (action != GLFW_PRESS)
+            return;
+
+        if (isRed)
+            object->setMaterial(isMetal ? metalBlue : plasticBlue);
+        else
+            object->setMaterial(isMetal ? metalRed : plasticRed);
+
+        isRed = !isRed;
         break;
     case 'i':
     case 'I':
@@ -148,27 +176,27 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         break;
     case 'L':
     case 'l':
+    {
         if (action == GLFW_PRESS)
             lightFollow = !lightFollow;
 
-        if (!lightFollow)
-            shader->setUniform4fv("LightPosition", INIT_LIGHT_POS);
+        vec4 pos = light->getPosition();
+        pos[3] = lightFollow ? 1 : 0;
+
+        light->setPosition(pos);
         break;
+    }
+
     case 'm':
     case 'M':
         if (action != GLFW_PRESS)
             return;
 
         if (isMetal)
-        {
-
-            object->setMaterial(metal);
-        }
+            object->setMaterial(isRed ? plasticRed : plasticBlue);
         else
-        {
+            object->setMaterial(isRed ? metalRed : metalBlue);
 
-            object->setMaterial(plastic);
-        }
         isMetal = !isMetal;
         break;
     case 't':
@@ -181,7 +209,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
             case 0:
                 glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
                 folder = isPhong ? "src/shader/phong/" : "src/shader/gouraud/";
-                shader->switchProgram( (folder + "vshader.glsl").c_str(), (folder + "fshader.glsl").c_str());
+                shader->switchProgram((folder + "vshader.glsl").c_str(), (folder + "fshader.glsl").c_str());
                 displayMode = 1;
                 break;
             case 1:
@@ -222,15 +250,16 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 
     case 'w':
     case 'W':
-        camera->setEye(camera->getEye() + vec4(0.0, 0.0, 0.5, 0.0));
+        camera->setEye(camera->getEye() + (camera->getAt() - camera->getEye()) * 0.1);
         break;
     case 'z':
     case 'Z':
-        camera->setEye(camera->getEye() + vec4(0.0, 0.0, -0.5, 0.0));
+        camera->setEye(camera->getEye() - (camera->getAt() - camera->getEye()) * 0.1);
         break;
     case 'o':
     case 'O':
-        if(action != GLFW_PRESS) return;
+        if (action != GLFW_PRESS)
+            return;
         colorOffIndex = (colorOffIndex + 1) % 4;
 
         light->enableAmbient();
@@ -271,39 +300,39 @@ int main(int argc, char **argv)
     shader = new Shader("src/shader/gouraud/vshader.glsl", "src/shader/gouraud/fshader.glsl");
     shader->use();
 
-    bool textureFlag = true; //enable texture mapping
+    bool textureFlag = true; // enable texture mapping
 
-    GLuint  TextureFlagLoc; // texture flag uniform location
+    GLuint TextureFlagLoc; // texture flag uniform location
 
     Texture earth = readppm("src/asset/earth.ppm");
     Texture basketball = readppm("src/asset/basketball.ppm");
-    
-    glGenTextures( 2, textures );
-    glBindTexture( GL_TEXTURE_2D, textures[0] );
-    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, earth.rows, earth.cols, 0,
-		  GL_RGB, GL_UNSIGNED_BYTE, earth.content );
+
+    glGenTextures(2, textures);
+    glBindTexture(GL_TEXTURE_2D, textures[0]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, earth.rows, earth.cols, 0,
+                 GL_RGB, GL_UNSIGNED_BYTE, earth.content);
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-    glBindTexture( GL_TEXTURE_2D, textures[1] );
-    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, basketball.rows, basketball.cols, 0,
-		  GL_RGB, GL_UNSIGNED_BYTE, basketball.content );
+    glBindTexture(GL_TEXTURE_2D, textures[1]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, basketball.rows, basketball.cols, 0,
+                 GL_RGB, GL_UNSIGNED_BYTE, basketball.content);
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-    glBindTexture( GL_TEXTURE_2D, textures[0] ); //set current texture
+    glBindTexture(GL_TEXTURE_2D, textures[0]); // set current texture
 
     light = new Light(shader,
-                      point4(1.001, -1.001, 1.001, 0.0),
-                      color4(0.3, 0.3, 0.3, 1),
+                      point4(0.0, 1.0, 0.0, 1.0),
+                      color4(0.4, 0.4, 0.4, 1),
                       color4(1, 1, 1, 1),
                       color4(1, 1, 1, 1));
 
@@ -314,21 +343,14 @@ int main(int argc, char **argv)
     camera->lookAt(vec4(0.0, 0.0, 30.0, 1.0), vec4(0.0, 0.0, 1.0, 1.0), vec4(0.0, 1.0, 0.0, 1.0));
 
     object = new Ball(INIT_POS, *shader, 2.0);
-    object->setMaterial(metal);
-
+    object->setMaterial(plasticBlue);
+  
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         object->update();
         object->display();
-
-        if (lightFollow)
-        {
-            vec4 pos = object->getPosition();
-            pos.z += 10;
-            light->setPosition(RotateY(0.5) * light->getPosition());
-        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();

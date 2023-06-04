@@ -19,10 +19,10 @@ void main() {
     
     fV = -pos;
     
-    fL = LightPosition.xyz;
+    fL = (ModelView*LightPosition).xyz;
     
-    if(LightPosition.w != 0.0)
-        fL = LightPosition.xyz - pos;
+    if((ModelView*LightPosition).w != 0.0)
+        fL = (ModelView*LightPosition).xyz - pos;
     
     gl_Position = Projection * ModelView * Transformation * vPosition;
 }

@@ -17,7 +17,7 @@ void main() {
     vec4 SpecularProduct = SpecularLight*SpecularMaterial;
 
     vec3 pos = (ModelView * Transformation * vPosition).xyz;
-    vec3 L = normalize(LightPosition.xyz - pos); 
+    vec3 L = normalize((ModelView*LightPosition).xyz - pos); 
     vec3 V = normalize(-pos); // viewer direction v(camera is at origin)
     vec3 H = normalize(L + V); 
     vec3 N = normalize(ModelView * Transformation * vec4(vNormal, 0.0)).xyz; // Compute terms in the illumination equation
